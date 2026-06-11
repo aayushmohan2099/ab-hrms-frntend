@@ -54,8 +54,6 @@ export function Login() {
         password,
         captcha: captchaInput,
       });
-
-      console.log("Login successful:", response);
       const userRole = response.user.role_name;
 
       if (userRole === "Administrator") {

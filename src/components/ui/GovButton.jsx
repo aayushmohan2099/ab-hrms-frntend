@@ -14,11 +14,16 @@ export function GovButton({
     "inline-flex items-center justify-center font-medium rounded transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
 
   const variants = {
-    primary: "bg-primary-dark text-base hover:bg-accent-navy focus:ring-primary-dark",
-    secondary: "bg-secondary text-base hover:bg-primary-light focus:ring-secondary",
-    danger: "bg-danger text-base hover:bg-warning focus:ring-danger",
+    primary:
+      "bg-primary-dark text-white hover:bg-accent-navy focus:ring-primary-dark",
+
+    secondary:
+      "bg-secondary text-white hover:bg-primary-light focus:ring-secondary",
+
+    danger: "bg-danger text-white hover:bg-warning focus:ring-danger",
+
     outline:
-      "border border-primary-dark text-primary-dark hover:bg-primary-dark hover:text-base focus:ring-primary-dark",
+      "border border-primary-dark text-primary-dark hover:bg-primary-dark hover:text-white focus:ring-primary-dark",
   };
 
   const sizes = {

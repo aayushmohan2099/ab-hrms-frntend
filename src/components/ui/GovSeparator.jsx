@@ -8,7 +8,7 @@ export function GovSeparator({ orientation = "horizontal", className }) {
       className={cn(
         "bg-gray-200",
         orientation === "horizontal" ? "h-[1px] w-full" : "h-full w-[1px]",
-        className
+        className,
       )}
     />
   );

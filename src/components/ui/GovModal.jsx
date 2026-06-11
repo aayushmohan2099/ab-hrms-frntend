@@ -35,7 +35,7 @@ export function GovModal({ isOpen, onClose, title, children, className }) {
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ duration: 0.2 }}
               className={cn(
-                "w-full max-w-5xl bg-base rounded-md shadow-xl pointer-events-auto border border-gray-200 flex flex-col",
+                "w-full max-w-5xl max-h-[90vh] bg-base rounded-md shadow-xl pointer-events-auto border border-gray-200 flex flex-col",
                 className,
               )}
             >
@@ -50,7 +50,7 @@ export function GovModal({ isOpen, onClose, title, children, className }) {
                   <X size={20} />
                 </button>
               </div>
-              <div className="p-5">{children}</div>
+              <div className="p-5 overflow-y-auto flex-1">{children}</div>
             </motion.div>
           </div>
         </>
