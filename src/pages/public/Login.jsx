@@ -1,36 +1,43 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import { authService } from "../../api/authService";
 import { GovCard } from "../../components/ui/GovCard";
 import { GovInput } from "../../components/ui/GovInput";
-import { GovSelect } from "../../components/ui/GovSelect";
 import { GovButton } from "../../components/ui/GovButton";
-import { Building } from "lucide-react";
+import { Building, RefreshCw } from "lucide-react";
 
 export function Login() {
-  const [role, setRole] = useState("Administrator");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [captchaInput, setCaptchaInput] = useState("");
-  const [captchaCode, setCaptchaCode] = useState("");
+  const [captchaImage, setCaptchaImage] = useState(null);
+
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isCaptchaLoading, setIsCaptchaLoading] = useState(false);
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const generateCaptcha = () => {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let code = "";
-    for (let i = 0; i < 6; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
+  const fetchCaptcha = async () => {
+    setIsCaptchaLoading(true);
+    try {
+      const data = await authService.getCaptcha();
+      setCaptchaImage(data.image);
+    } catch (err) {
+      console.error("Captcha fetch error:", err);
+      setError("Failed to load secure captcha. Please check your connection.");
+    } finally {
+      setIsCaptchaLoading(false);
     }
-    setCaptchaCode(code);
   };
 
   useEffect(() => {
-    generateCaptcha();
+    fetchCaptcha();
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -39,20 +46,35 @@ export function Login() {
       return;
     }
 
-    if (captchaInput !== captchaCode) {
-      setError("Invalid CAPTCHA code. Please try again.");
-      generateCaptcha();
+    setIsLoading(true);
+
+    try {
+      const response = await login({
+        username,
+        password,
+        captcha: captchaInput,
+      });
+
+      console.log("Login successful:", response);
+      const userRole = response.user.role_name;
+
+      if (userRole === "Administrator") {
+        navigate("/admin/dashboard");
+      } else if (userRole === "Manager") {
+        navigate("/manager/dashboard");
+      } else {
+        navigate("/employee/dashboard");
+      }
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.detail || "Login failed. Please try again.";
+      setError(errorMessage);
+
+      fetchCaptcha();
       setCaptchaInput("");
-      return;
+    } finally {
+      setIsLoading(false);
     }
-
-    // Mock Login Success
-    login({ username, role });
-
-    // Redirect based on role
-    if (role === "Administrator") navigate("/admin/dashboard");
-    else if (role === "Manager") navigate("/manager/dashboard");
-    else navigate("/employee/dashboard");
   };
 
   return (
@@ -64,31 +86,22 @@ export function Login() {
             <Building size={32} />
           </div>
           <h2 className="text-2xl font-bold text-gray-800">HRMS Portal</h2>
-          <p className="text-sm text-gray-500">National Informatics Centre</p>
+          <p className="text-sm text-gray-500">AB Enterprises</p>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 text-danger text-sm rounded border border-red-200">
+          <div className="mb-4 p-3 bg-red-50 text-danger text-sm rounded border border-red-200 text-center font-medium">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          <GovSelect
-            label="Select Role"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            options={[
-              { value: "Administrator", label: "Administrator" },
-              { value: "Manager", label: "Manager" },
-              { value: "Employee", label: "Employee" },
-            ]}
-          />
           <GovInput
             label="Username"
             placeholder="Enter your username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            disabled={isLoading}
           />
           <GovInput
             label="Password"
@@ -96,29 +109,58 @@ export function Login() {
             placeholder="Enter your password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            disabled={isLoading}
           />
-          
+
+          {/* Replicating the older Captcha layout using Tailwind */}
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-gray-700">Security Code</label>
-            <div className="flex gap-3">
-              <div 
-                className="flex-1 bg-gray-200 flex items-center justify-center text-lg font-mono font-bold tracking-widest text-gray-700 rounded select-none cursor-pointer"
-                onClick={generateCaptcha}
-                title="Click to refresh CAPTCHA"
-              >
-                {captchaCode}
+            <label className="text-sm font-semibold text-gray-700">
+              Captcha
+            </label>
+
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between items-center bg-slate-50 border border-slate-200 rounded-md p-2">
+                {isCaptchaLoading || !captchaImage ? (
+                  <div className="w-[180px] h-[50px] flex items-center justify-center">
+                    <RefreshCw
+                      className="animate-spin text-gray-400"
+                      size={20}
+                    />
+                  </div>
+                ) : (
+                  <img
+                    src={captchaImage}
+                    alt="Security Captcha"
+                    className="w-[180px] h-[50px] block"
+                  />
+                )}
+                <button
+                  type="button"
+                  onClick={fetchCaptcha}
+                  disabled={isCaptchaLoading}
+                  className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-1.5 px-3 rounded text-sm transition-colors"
+                >
+                  Refresh
+                </button>
               </div>
+
               <input
-                className="flex-1 px-3 py-2 bg-base border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-dark"
-                placeholder="Enter code"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-dark uppercase tracking-[0.2em] text-center font-semibold text-gray-800"
+                placeholder="Enter captcha"
                 value={captchaInput}
-                onChange={(e) => setCaptchaInput(e.target.value)}
+                onChange={(e) => setCaptchaInput(e.target.value.toUpperCase())}
+                disabled={isLoading}
+                maxLength={6}
               />
             </div>
           </div>
 
-          <GovButton type="submit" className="w-full mt-2">
-            Sign In
+          <GovButton
+            type="submit"
+            className="w-full mt-4"
+            disabled={isLoading || isCaptchaLoading}
+          >
+            {isLoading ? "Authenticating..." : "Log In"}
           </GovButton>
         </form>
       </GovCard>

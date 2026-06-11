@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { authService } from "../api/authService";
+import api from "../api/axios";
 
 const AuthContext = createContext();
 
@@ -7,24 +9,32 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Mock check for existing session
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
+    // Check for existing session on mount
+    const storedUser = localStorage.getItem("user");
+    const token = localStorage.getItem("access_token");
+
+    if (storedUser && token) {
       setUser(JSON.parse(storedUser));
+      // Set default header for initial load
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
     }
     setLoading(false);
   }, []);
 
-  const login = (userData) => {
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
-    localStorage.setItem('token', 'mock-jwt-token-12345');
+  const login = async (credentials) => {
+    try {
+      const data = await authService.login(credentials);
+      setUser(data.user);
+      return data; // Return data so the UI component can handle success (e.g., redirects)
+    } catch (error) {
+      throw error; // Throw error so the UI component can display the message
+    }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await authService.logout();
     setUser(null);
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
+    delete api.defaults.headers.common["Authorization"];
   };
 
   return (
