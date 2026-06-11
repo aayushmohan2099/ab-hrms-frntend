@@ -1,3 +1,4 @@
+// src/components/ui/GovBadge.jsx
 import { cn } from "../../utils/cn";
 
 export function GovBadge({ children, variant = "neutral", className }) {

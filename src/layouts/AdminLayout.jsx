@@ -1,3 +1,4 @@
+// src/layouts/AdminLayout.jsx
 import { Outlet, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { LogOut, LayoutDashboard, Building2, Users, FileText, Calendar } from "lucide-react";

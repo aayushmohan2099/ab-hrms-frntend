@@ -1,3 +1,4 @@
+// src/components/ui/GovTable.jsx
 import { cn } from "../../utils/cn";
 
 export function GovTable({ children, className }) {

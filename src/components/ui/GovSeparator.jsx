@@ -1,3 +1,4 @@
+// src/components/ui/GovSeparator.jsx
 import { cn } from "../../utils/cn";
 
 export function GovSeparator({ orientation = "horizontal", className }) {

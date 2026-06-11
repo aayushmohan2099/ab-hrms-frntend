@@ -1,3 +1,4 @@
+// src/components/ui/GovModal.jsx
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "../../utils/cn";
 import { X } from "lucide-react";
@@ -34,8 +35,8 @@ export function GovModal({ isOpen, onClose, title, children, className }) {
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ duration: 0.2 }}
               className={cn(
-                "w-full max-w-lg bg-base rounded-md shadow-xl pointer-events-auto border border-gray-200 flex flex-col",
-                className
+                "w-full max-w-5xl bg-base rounded-md shadow-xl pointer-events-auto border border-gray-200 flex flex-col",
+                className,
               )}
             >
               <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
