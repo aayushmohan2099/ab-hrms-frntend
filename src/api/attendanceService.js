@@ -1,0 +1,165 @@
+// src/api/attendanceService.js
+
+import api from "./axios";
+
+export const attendanceService = {
+  // ============================================================
+  // CALENDAR & MONTHLY LISTING
+  // ============================================================
+
+  /**
+   * 1) Get Monthly Attendance for all employees in a specific department.
+   * @param {number|string} deptId - Department ID.
+   * @param {number} month - Month number (1-12).
+   * @param {number} year - 4-digit year (e.g., 2026).
+   * @returns {Promise<Array>} Array of Employee objects with their daily_records and present_summary.
+   */
+  getDepartmentMonthlyAttendance: async (deptId, month, year) => {
+    const response = await api.get(
+      `/attendance/department/${deptId}/monthly/`,
+      {
+        params: {
+          month,
+          year,
+        },
+      },
+    );
+    return response.data;
+  },
+
+  // ============================================================
+  // LEAVE APPLICATIONS
+  // ============================================================
+
+  /**
+   * 2) Apply for Leave (Employee Self-Service)
+   * @param {Object} data - Leave application payload.
+   * Expected: { leave_type: "MATERNITY"|"CASUAL"|"SICK", start_date: "YYYY-MM-DD", end_date: "YYYY-MM-DD", reason: "..." }
+   */
+  applyForLeave: async (data) => {
+    const response = await api.post("/attendance/leaves/apply/", data);
+    return response.data;
+  },
+
+  /**
+   * 2.1) Get Manager/Admin pending leave list
+   * @param {number} page - Page number.
+   * @param {number} pageSize - Page size.
+   */
+  getManagerLeaveList: async (page = 1, pageSize = 20) => {
+    const response = await api.get("/attendance/leaves/manager/list/", {
+      params: {
+        page,
+        page_size: pageSize,
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * 2.2) Get deep details of a specific leave application
+   * @param {number|string} leaveId - ID of the leave application.
+   */
+  getLeaveDetail: async (leaveId) => {
+    const response = await api.get(
+      `/attendance/leaves/manager/${leaveId}/detail/`,
+    );
+    return response.data;
+  },
+
+  /**
+   * 2.3) Manager Action: Approve or Reject a Leave Application
+   * @param {number|string} leaveId - ID of the leave application.
+   * @param {string} action - Action to take ("approve" or "reject").
+   */
+  actionLeaveApplication: async (leaveId, action) => {
+    const response = await api.post(`/attendance/leaves/${leaveId}/${action}/`);
+    return response.data;
+  },
+
+  /**
+   * 2.4) Get My Leave History (Employee Self-Service)
+   * Fetches the logged-in employee's own leave applications.
+   * @param {number} page - Page number.
+   * @param {number} pageSize - Page size.
+   */
+  getMyLeaveHistory: async (page = 1, pageSize = 20) => {
+    const response = await api.get("/attendance/leaves/my-history/", {
+      params: {
+        page,
+        page_size: pageSize,
+      },
+    });
+    return response.data;
+  },
+
+  // ============================================================
+  // MANUAL OVERRIDES & BULK OPERATIONS
+  // ============================================================
+
+  /**
+   * 3) Mark an employee absent on a specific date.
+   * @param {string} employeeCode - Employee's unique code (e.g., "AB-IT-001").
+   * @param {string} date - Date in YYYY-MM-DD format.
+   */
+  markAbsent: async (employeeCode, date) => {
+    const response = await api.post("/attendance/mark-absent/", {
+      employee_code: employeeCode,
+      date: date,
+    });
+    return response.data;
+  },
+
+  /**
+   * 4) Bulk Upload Attendance via CSV
+   * @param {File} file - The CSV file containing bulk attendance data.
+   */
+  bulkUploadAttendance: async (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await api.post("/attendance/bulk-upload/", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * 4.1) Download Bulk Upload CSV Format Template
+   * Triggers a browser download of the expected CSV template.
+   */
+  downloadBulkUploadTemplate: () => {
+    // Construct the full URL for the template download
+    const url = `${api.defaults.baseURL}/attendance/bulk-upload/?download_format=true`;
+
+    // Create a temporary link element to trigger the download
+    const link = document.createElement("a");
+    link.href = url;
+    // We attach the current auth token so the request succeeds if the backend requires authentication for downloads
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      // A safer approach using Blob (which automatically uses Axios interceptors):
+      return api
+        .get("/attendance/bulk-upload/", {
+          params: { download_format: "true" },
+          responseType: "blob",
+        })
+        .then((response) => {
+          const blobUrl = window.URL.createObjectURL(new Blob([response.data]));
+          const downloadLink = document.createElement("a");
+          downloadLink.href = blobUrl;
+          downloadLink.setAttribute(
+            "download",
+            "attendance_bulk_upload_template.csv",
+          );
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          document.body.removeChild(downloadLink);
+        });
+    } else {
+      link.click();
+    }
+  },
+};

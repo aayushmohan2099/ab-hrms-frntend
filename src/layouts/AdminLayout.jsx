@@ -27,6 +27,7 @@ export function AdminLayout() {
             <li><Link to="/admin/users" className="flex items-center gap-3 px-3 py-2 rounded hover:bg-primary-dark transition-colors"><Users size={18}/> Users</Link></li>
             <li><Link to="/admin/employees" className="flex items-center gap-3 px-3 py-2 rounded hover:bg-primary-dark transition-colors"><Users size={18}/> Employees</Link></li>
             <li><Link to="/admin/attendance" className="flex items-center gap-3 px-3 py-2 rounded hover:bg-primary-dark transition-colors"><Calendar size={18}/> Attendance</Link></li>
+            <li><Link to="/admin/attendance/LA/list" className="flex items-center gap-3 px-3 py-2 rounded hover:bg-primary-dark transition-colors"><Calendar size={18}/> Leave Application List</Link></li>
             <li><Link to="/admin/salary-slips" className="flex items-center gap-3 px-3 py-2 rounded hover:bg-primary-dark transition-colors"><FileText size={18}/> Salary Slips</Link></li>
           </ul>
         </nav>
