@@ -1,4 +1,4 @@
-// src/pages/admin/AttenList.jsx
+// src/pages/manager/AttenList.jsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { departmentService } from "../../api/deptService";
@@ -13,13 +13,17 @@ import {
   GovTableCell,
 } from "../../components/ui/GovTable";
 import { Calendar, Upload, RefreshCw } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
 
 export function AttenList() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [departments, setDepartments] = useState([]);
 
   // Selection State
-  const [selectedDept, setSelectedDept] = useState("");
+  const [selectedDept, setSelectedDept] = useState(
+    user?.department_id ? String(user.department_id) : "",
+  );
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(
     Math.min(Math.max(new Date().getFullYear(), 2025), 2029),
@@ -50,10 +54,14 @@ export function AttenList() {
   ];
 
   useEffect(() => {
-    departmentService
-      .getDepartments(1, 100)
-      .then((data) => setDepartments(data.results || []));
-  }, []);
+    departmentService.getDepartments(1, 100).then((data) => {
+      setDepartments(data.results || []);
+
+      if (user?.department_id) {
+        setSelectedDept(String(user.department_id));
+      }
+    });
+  }, [user]);
 
   const fetchAttendance = async () => {
     if (!selectedDept || !selectedMonth || !selectedYear) return;
@@ -94,7 +102,7 @@ export function AttenList() {
         <div className="flex flex-col sm:flex-row gap-2 md:ml-auto">
           <GovButton
             variant="outline"
-            onClick={() => navigate("/admin/attendance/bulk-upload")}
+            onClick={() => navigate("/manager/attendance/bulk-upload")}
             className="gap-2"
           >
             <Upload size={16} /> Bulk Upload Attendance
@@ -103,7 +111,7 @@ export function AttenList() {
           <GovButton
             variant="outline"
             className="gap-2"
-            onClick={() => navigate("/admin/attendance/holiday-pattern")}
+            onClick={() => navigate("/manager/attendance/holiday-pattern")}
           >
             <Calendar size={16} /> Set Holiday Pattern
           </GovButton>
@@ -114,18 +122,31 @@ export function AttenList() {
         {/* Filters */}
         <div className="p-4 border-b border-gray-200 bg-gray-50 grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="md:col-span-2">
-            <GovSelect
-              label="Department"
-              value={selectedDept}
-              onChange={(e) => setSelectedDept(e.target.value)}
-              options={[
-                { value: "", label: "-- Select Department --" },
-                ...departments.map((d) => ({
-                  value: d.id,
-                  label: `${d.code} - ${d.name}`,
-                })),
-              ]}
-            />
+            {user?.department_id ? (
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Department
+                </label>
+                <div className="h-10 px-3 flex items-center rounded-md border bg-gray-100 text-gray-700">
+                  {user.department_name}
+                </div>
+              </div>
+            ) : (
+              <div className="md:col-span-2">
+                <GovSelect
+                  label="Department"
+                  value={selectedDept}
+                  onChange={(e) => setSelectedDept(e.target.value)}
+                  options={[
+                    { value: "", label: "-- Select Department --" },
+                    ...departments.map((d) => ({
+                      value: d.id,
+                      label: `${d.code} - ${d.name}`,
+                    })),
+                  ]}
+                />
+              </div>
+            )}
           </div>
           <GovSelect
             label="Year"
@@ -212,7 +233,7 @@ export function AttenList() {
                         size="sm"
                         className="gap-2 text-xs"
                         onClick={() =>
-                          navigate("/admin/attendance/calendar", {
+                          navigate("/manager/attendance/calendar", {
                             state: {
                               empCode: emp.employee_code,
                               month: selectedMonth,

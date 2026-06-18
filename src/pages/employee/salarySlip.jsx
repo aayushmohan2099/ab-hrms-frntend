@@ -2,7 +2,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { salaryService } from "../../api/salaryService";
+import { SalSlipService } from "../../api/SalSlipService";
 import { GovCard } from "../../components/ui/GovCard";
 import { GovButton } from "../../components/ui/GovButton";
 import { GovSelect } from "../../components/ui/GovSelect";
@@ -14,6 +14,7 @@ import {
 } from "../../components/ui/GovTable";
 import { GovSeparator } from "../../components/ui/GovSeparator";
 import { Download, Search, AlertCircle } from "lucide-react";
+import FooterImage from "../../assets/AB_FOOTER.png";
 
 export function SalarySlip() {
   const { user } = useAuth();
@@ -70,7 +71,7 @@ export function SalarySlip() {
     try {
       // NOTE: Ensure your Django backend is updated to return the serialized slip
       // fields in this JSON response so the table below can populate correctly.
-      const data = await salaryService.generateSalarySlip(
+      const data = await SalSlipService.generateSalarySlip(
         employeeCode,
         year,
         month,
@@ -304,6 +305,15 @@ export function SalarySlip() {
               This is a system-generated salary slip and does not require a
               signature.
             </p>
+
+            {/* Added Footer Image */}
+            <div className="mt-6 flex justify-center w-full">
+              <img
+                src={FooterImage}
+                alt="A B Enterprise Footer"
+                className="w-full h-auto object-contain pointer-events-none select-none"
+              />
+            </div>
           </div>
         </GovCard>
       )}

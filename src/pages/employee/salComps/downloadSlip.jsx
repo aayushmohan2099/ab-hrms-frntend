@@ -2,12 +2,12 @@
 import { useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../contexts/AuthContext";
-import { salaryService } from "../../../api/salaryService";
+import { SalSlipService } from "../../../api/SalSlipService";
 import { GovCard } from "../../../components/ui/GovCard";
 import { GovButton } from "../../../components/ui/GovButton";
 import { ArrowLeft, CheckCircle, AlertCircle } from "lucide-react";
 
-export default function DownloadSlip() {
+export function DownloadSlip() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -34,7 +34,7 @@ export default function DownloadSlip() {
       hasDownloaded.current = true;
 
       try {
-        await salaryService.downloadSalarySlip(codeToUse, year, month);
+        await SalSlipService.downloadSalarySlip(codeToUse, year, month);
         setStatus("success");
       } catch (err) {
         console.error("Download failed:", err);

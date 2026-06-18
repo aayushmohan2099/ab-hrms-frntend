@@ -178,4 +178,14 @@ export const payrollService = {
 
     return response.data;
   },
+
+  /**
+   * Trigger the backend computation engine to generate records for a run
+   */
+  generatePayrollRecords: async (deptId, runId) => {
+    const response = await api.post(
+      `/dept/design/${deptId}/runs/${runId}/generate/`,
+    );
+    return response.data;
+  },
 };

@@ -6,6 +6,8 @@ import { GovCard } from "../../components/ui/GovCard";
 import { GovInput } from "../../components/ui/GovInput";
 import { GovButton } from "../../components/ui/GovButton";
 import { Building, RefreshCw } from "lucide-react";
+import bg from "../../assets/login_bg.png";
+import logo from "../../assets/AB_LOGO.png";
 
 export function Login() {
   const [username, setUsername] = useState("");
@@ -76,12 +78,16 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4 relative">
-      <div className="absolute top-0 w-full h-64 bg-primary-dark shadow-md" />
+    <div
+      className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-cover bg-center bg-no-repeat"
+      style={{
+        backgroundImage: `url(${bg})`,
+      }}
+    >
       <GovCard className="max-w-md w-full relative z-10 p-8 shadow-2xl border-t-4 border-t-primary-light">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-50 text-primary-dark rounded-full mb-4">
-            <Building size={32} />
+            <Building size={42} />
           </div>
           <h2 className="text-2xl font-bold text-gray-800">HRMS Portal</h2>
           <p className="text-sm text-gray-500">AB Enterprises</p>

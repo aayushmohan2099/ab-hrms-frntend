@@ -162,4 +162,38 @@ export const attendanceService = {
       link.click();
     }
   },
+
+  // ============================================================
+  // HOLIDAY PATTERN
+  // ============================================================
+
+  /**
+   * 5) Bulk Mark Holidays / Holiday Pattern
+   * @param {Object} data
+   * Example:
+   * {
+   *   year: 2026,
+   *   month: 6,
+   *   holidays: ["2026-06-07", "2026-06-14", "2026-06-21", "2026-06-28"]
+   * }
+   */
+  bulkMarkHolidays: async (data) => {
+    const response = await api.post("/attendance/holiday-pattern/", data);
+    return response.data;
+  },
+
+  // ============================================================
+  // MANAGER DASHBOARD
+  // ============================================================
+
+  /**
+   * 6) Department Manager Dashboard Statistics
+   *
+   * Returns dashboard KPIs and attendance/leave summary
+   * for the logged-in department manager.
+   */
+  getManagerDashboardStats: async () => {
+    const response = await api.get("/attendance/manager/dashboard-stats/");
+    return response.data;
+  },
 };

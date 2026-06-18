@@ -100,7 +100,7 @@ export function ApplyLeave() {
                 required
                 options={[
                   { value: "CASUAL", label: "Casual Leave (CL)" },
-                  { value: "MATERNITY", label: "Maternity Leave (ML)" },
+                  // { value: "MATERNITY", label: "Maternity Leave (ML)" },
                   { value: "SICK", label: "Sick Leave (SL)" },
                 ]}
               />

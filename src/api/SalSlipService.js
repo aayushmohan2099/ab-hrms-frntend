@@ -1,8 +1,8 @@
-// src/api/salaryService.js
+// src/api/SalSlipService.js
 
 import api from "./axios";
 
-export const salaryService = {
+export const SalSlipService = {
   // ============================================================
   // SALARY SLIPS
   // ============================================================
@@ -63,5 +63,37 @@ export const salaryService = {
 
     // Free up memory
     window.URL.revokeObjectURL(blobUrl);
+  },
+
+  // ============================================================
+  // SALARY SLIP LISTING
+  // ============================================================
+
+  /**
+   * 3) Get Salary Slip List
+   *
+   * Supports pagination and optional filtering.
+   *
+   * @param {number} page
+   * @param {number} pageSize
+   * @param {Object} filters
+   *
+   * Example:
+   * {
+   *   employee_code: "EMP001",
+   *   year: 2026,
+   *   month: 6
+   * }
+   */
+  getSalarySlipList: async (page = 1, pageSize = 20, filters = {}) => {
+    const response = await api.get("/salary-slips/list/", {
+      params: {
+        page,
+        page_size: pageSize,
+        ...filters,
+      },
+    });
+
+    return response.data;
   },
 };
