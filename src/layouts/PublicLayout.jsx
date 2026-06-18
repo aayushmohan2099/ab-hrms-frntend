@@ -1,6 +1,6 @@
 // src/layouts/PublicLayout.jsx
 import { Outlet, Link, useLocation } from "react-router-dom";
-import logo from "../assets/AB_logo.png";
+import logo from "../assets/AB_LOGO.png";
 
 export function PublicLayout() {
   const location = useLocation();
