@@ -54,6 +54,7 @@ import { Home } from "../pages/public/Home";
 import { Login } from "../pages/public/Login";
 import { About } from "../pages/public/About";
 import { Support } from "../pages/public/Support";
+import { Updates } from "../pages/public/Updates";
 
 const Placeholder = ({ title }) => (
   <div className="p-4 bg-white rounded shadow">{title} Page Stub</div>
@@ -68,6 +69,7 @@ export function AppRoutes() {
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/support" element={<Support />} />
+          <Route path="/latest-updates" element={<Updates />} />
         </Route>
         <Route path="/login" element={<Login />} />
       </Route>

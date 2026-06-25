@@ -4,14 +4,30 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { attendanceService } from "../../../api/attendanceService";
 import { GovCalendar } from "../../../components/ui/GovCalendar";
 import { GovButton } from "../../../components/ui/GovButton";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, Loader2 } from "lucide-react"; // Added Loader2
 
 export function EmployeeCalendar() {
   const location = useLocation();
   const navigate = useNavigate();
 
   // Safely grab state passed from the list page
-  const { empCode, month, year, records, name } = location.state || {};
+  const {
+    empCode,
+    month: initialMonth,
+    year: initialYear,
+    records: initialRecords,
+    name,
+  } = location.state || {};
+
+  // Convert router state into manageable local state for navigation
+  const [currentMonth, setCurrentMonth] = useState(
+    initialMonth || new Date().getMonth() + 1,
+  );
+  const [currentYear, setCurrentYear] = useState(
+    initialYear || new Date().getFullYear(),
+  );
+  const [currentRecords, setCurrentRecords] = useState(initialRecords || []);
+  const [isFetchingMonth, setIsFetchingMonth] = useState(false);
 
   const [calendarWeeks, setCalendarWeeks] = useState([]);
   const [modifiedDates, setModifiedDates] = useState({}); // Track which dates the user manually toggled
@@ -32,15 +48,49 @@ export function EmployeeCalendar() {
     "December",
   ];
 
+  // Function to handle changing months
+  const handleMonthChange = async (delta) => {
+    let newMonth = currentMonth + delta;
+    let newYear = currentYear;
+
+    if (newMonth > 12) {
+      newMonth = 1;
+      newYear += 1;
+    } else if (newMonth < 1) {
+      newMonth = 12;
+      newYear -= 1;
+    }
+
+    setCurrentMonth(newMonth);
+    setCurrentYear(newYear);
+    setIsFetchingMonth(true);
+
+    try {
+      const data = await attendanceService.getEmployeeAttendance(
+        empCode,
+        newYear,
+        newMonth,
+      );
+      setCurrentRecords(data || []);
+      setModifiedDates({}); // Clear tracking when leaving month
+    } catch (err) {
+      console.error("Failed to fetch attendance:", err);
+      alert("Failed to load attendance for the selected month.");
+      setCurrentRecords([]);
+    } finally {
+      setIsFetchingMonth(false);
+    }
+  };
+
   useEffect(() => {
     if (!empCode) {
       navigate("/manager/attendance");
       return;
     }
 
-    // Build the calendar grid
-    const daysInMonth = new Date(year, month, 0).getDate();
-    const firstDayIndex = new Date(year, month - 1, 1).getDay();
+    // Build the calendar grid using current state variables
+    const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+    const firstDayIndex = new Date(currentYear, currentMonth - 1, 1).getDay();
 
     let currentWeek = new Array(7).fill(null);
     const weeks = [];
@@ -56,8 +106,8 @@ export function EmployeeCalendar() {
 
       // Find backend record for this date
       // Formatting date strictly to YYYY-MM-DD
-      const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-      const record = records.find((r) => r.date === dateStr);
+      const dateStr = `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const record = currentRecords.find((r) => r.date === dateStr);
 
       // Default to what backend says, but override if user modified it in UI
       const currentStatus =
@@ -98,7 +148,14 @@ export function EmployeeCalendar() {
     }
 
     setCalendarWeeks(weeks);
-  }, [empCode, month, year, records, modifiedDates, navigate]);
+  }, [
+    empCode,
+    currentMonth,
+    currentYear,
+    currentRecords,
+    modifiedDates,
+    navigate,
+  ]);
 
   const handleCellClick = (dayObj) => {
     // Only allow toggling if it's a standard Present/Absent day and NOT locked by a manager/leave
@@ -176,12 +233,27 @@ export function EmployeeCalendar() {
         cannot be modified here.
       </p>
 
-      <GovCalendar
-        month={monthNames[month - 1]}
-        year={year}
-        weeks={calendarWeeks}
-        onCellClick={handleCellClick}
-      />
+      {/* Wrapping Calendar in a relative div to allow the loader overlay */}
+      <div className="relative">
+        {isFetchingMonth && (
+          <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-10 flex items-center justify-center rounded-md">
+            <div className="flex flex-col items-center text-primary-dark">
+              <Loader2 className="animate-spin mb-2" size={32} />
+              <span className="font-semibold text-sm">
+                Loading attendance...
+              </span>
+            </div>
+          </div>
+        )}
+        <GovCalendar
+          month={monthNames[currentMonth - 1]}
+          year={currentYear}
+          weeks={calendarWeeks}
+          onCellClick={handleCellClick}
+          onPrevMonth={() => handleMonthChange(-1)}
+          onNextMonth={() => handleMonthChange(1)}
+        />
+      </div>
     </div>
   );
 }

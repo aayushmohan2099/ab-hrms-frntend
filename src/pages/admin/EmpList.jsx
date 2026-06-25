@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { empService } from "../../api/empService";
 import { departmentService } from "../../api/deptService";
+import { designationService } from "../../api/desigService";
 import { GovCard } from "../../components/ui/GovCard";
 import { GovSelect } from "../../components/ui/GovSelect";
 import { GovButton } from "../../components/ui/GovButton";
@@ -32,6 +33,9 @@ export function EmpList() {
   const [departments, setDepartments] = useState([]);
   const [selectedDept, setSelectedDept] = useState("");
 
+  const [designations, setDesignations] = useState([]);
+  const [selectedDesig, setSelectedDesig] = useState("");
+
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -51,20 +55,26 @@ export function EmpList() {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [activeEmpCode, setActiveEmpCode] = useState(null);
 
-  // 1. Fetch Departments on mount
+  // 1. Fetch Departments
   useEffect(() => {
-    const fetchDepts = async () => {
-      try {
-        const data = await departmentService.getDepartments(1, 100);
-        setDepartments(data.results || []);
-      } catch (err) {
-        console.error("Failed to fetch departments", err);
-      }
-    };
-    fetchDepts();
+    departmentService
+      .getDepartments(1, 100)
+      .then((data) => setDepartments(data.results || []));
   }, []);
 
-  // 2. Fetch Employees when Department or Page changes
+  // 2. Fetch Designations when Dept changes
+  useEffect(() => {
+    if (selectedDept) {
+      designationService
+        .getDesignations(selectedDept, 1, 100)
+        .then((data) => setDesignations(data.results || []));
+    } else {
+      setDesignations([]);
+      setSelectedDesig(""); // Reset if dept changes
+    }
+  }, [selectedDept]);
+
+  // 3. Fetch Employees when Dept, Designation, or Page changes
   const fetchEmployees = async () => {
     if (!selectedDept) {
       setEmployees([]);
@@ -74,18 +84,17 @@ export function EmpList() {
     setLoading(true);
     setError(null);
     try {
-      const data = await empService.getEmployees(page, pageSize, {
-        department: selectedDept,
-      });
+      const filters = { department: selectedDept };
+      if (selectedDesig) filters.designation = selectedDesig;
+
+      const data = await empService.getEmployees(page, pageSize, filters);
       setEmployees(data.results || []);
       setTotalCount(data.count || 0);
       setHasNext(!!data.next);
       setHasPrev(!!data.previous);
-      // Clear selection on page/dept change
       setSelectedEmpCodes([]);
     } catch (err) {
-      console.error("Failed to fetch employees:", err);
-      setError("Unable to load employees. Please check your connection.");
+      setError("Unable to load employees.");
     } finally {
       setLoading(false);
     }
@@ -93,7 +102,7 @@ export function EmpList() {
 
   useEffect(() => {
     fetchEmployees();
-  }, [selectedDept, page]);
+  }, [selectedDept, selectedDesig, page]);
 
   // Bulk Selection Logic
   const handleSelectAll = (e) => {
@@ -195,6 +204,24 @@ export function EmpList() {
               >
                 <Trash2 size={14} /> Delete Selected
               </GovButton>
+            </div>
+          )}
+          
+          {/* Conditional Designation Filter */}
+          {selectedDept && (
+            <div className="w-full md:w-64">
+              <GovSelect
+                label="Filter by Designation"
+                value={selectedDesig}
+                onChange={(e) => {
+                  setSelectedDesig(e.target.value);
+                  setPage(1);
+                }}
+                options={[
+                  { value: "", label: "-- All Designations --" },
+                  ...designations.map((d) => ({ value: d.id, label: d.name })),
+                ]}
+              />
             </div>
           )}
         </div>

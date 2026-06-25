@@ -77,6 +77,8 @@ export function BulkCreateEmp() {
     "emergency_contact_name",
     "emergency_contact_phone",
     "emergency_contact_relation",
+    "job_seeker_id",
+    "theme",
   ];
 
   const handleDownloadTemplate = () => {

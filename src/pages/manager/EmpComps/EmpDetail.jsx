@@ -72,6 +72,8 @@ export function EmpDetail({ empCode, onClose, onRefresh }) {
       "emergency_contact_name",
       "emergency_contact_phone",
       "emergency_contact_relation",
+      "job_seeker_id",
+      "theme",
     ];
 
     updateFields.forEach((field) => {
@@ -209,6 +211,163 @@ export function EmpDetail({ empCode, onClose, onRefresh }) {
                 onChange={(e) => setProfilePic(e.target.files[0])}
               />
             </div>
+          </div>
+        </section>
+
+        {/* Job Seeker Details */}
+        <section>
+          <h4 className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-3 border-b border-gray-200 pb-1">
+            Job Seeker Details
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <GovInput
+              id="job_seeker_id"
+              label="Job Seeker ID"
+              value={formData.job_seeker_id}
+              onChange={handleChange}
+            />
+            <GovSelect
+              id="theme"
+              label="Theme"
+              value={formData.theme}
+              onChange={handleChange}
+              options={[
+                { value: "", label: "Theme not set by Admin" },
+                { value: "Admin & HR", label: "Admin & HR" },
+                { value: "Capacity Building", label: "Capacity Building" },
+                {
+                  value: "Farm Livelihood Allied",
+                  label: "Farm Livelihood Allied",
+                },
+                {
+                  value: "Financial Inclusion",
+                  label: "Financial Inclusion",
+                },
+                { value: "FNHW", label: "FNHW" },
+                {
+                  value: "Institution Building",
+                  label: "Institution Building",
+                },
+                {
+                  value: "Knowledge Management & Communication",
+                  label: "Knowledge Management & Communication",
+                },
+                {
+                  value: "Micro Enterprise Development",
+                  label: "Micro Enterprise Development",
+                },
+                { value: "MIS", label: "MIS" },
+                {
+                  value: "Monitoring Evalution and Learning",
+                  label: "Monitoring Evalution and Learning",
+                },
+                { value: "Procurement", label: "Procurement" },
+                {
+                  value: "Project Development & Implementation",
+                  label: "Project Development & Implementation",
+                },
+                { value: "SISD & Gender", label: "SISD & Gender" },
+                {
+                  value: "Non Farm Livelihood",
+                  label: "Non Farm Livelihood",
+                },
+                {
+                  value: "Enterprise Promotion",
+                  label: "Enterprise Promotion",
+                },
+                { value: "Finance", label: "Finance" },
+                {
+                  value: "Social Inclusion and Social Development",
+                  label: "Social Inclusion and Social Development",
+                },
+                {
+                  value: "Social Mobilisation",
+                  label: "Social Mobilisation",
+                },
+                {
+                  value: "Monitoring and Evaluation",
+                  label: "Monitoring and Evaluation",
+                },
+                { value: "Accounts & Finance", label: "Accounts & Finance" },
+                { value: "Admin", label: "Admin" },
+                {
+                  value: "Agriculture (AEP)/NTFP",
+                  label: "Agriculture (AEP)/NTFP",
+                },
+                {
+                  value: "Audit/Convergence and Special Projects",
+                  label: "Audit/Convergence and Special Projects",
+                },
+                {
+                  value: "Bank Linkage and Interest Subvention",
+                  label: "Bank Linkage and Interest Subvention",
+                },
+                {
+                  value: "Community Financial Audit",
+                  label: "Community Financial Audit",
+                },
+                {
+                  value: "Community Institution Capacity Building",
+                  label: "Community Institution Capacity Building",
+                },
+                { value: "Convergence", label: "Convergence" },
+                {
+                  value: "Data Analysis and Documentation",
+                  label: "Data Analysis and Documentation",
+                },
+                { value: "Digital Content", label: "Digital Content" },
+                { value: "Digital Finance", label: "Digital Finance" },
+                { value: "FNHW & Gender", label: "FNHW & Gender" },
+                { value: "HR", label: "HR" },
+                {
+                  value: "Institutional Building",
+                  label: "Institutional Building",
+                },
+                {
+                  value: "Insurance and Pension and Community Fund Management",
+                  label: "Insurance and Pension and Community Fund Management",
+                },
+                { value: "IT & MIS", label: "IT & MIS" },
+                {
+                  value: "Livelihood Capacity Building and Documentation",
+                  label: "Livelihood Capacity Building and Documentation",
+                },
+                {
+                  value: "Livestock Development/Fisheries",
+                  label: "Livestock Development/Fisheries",
+                },
+                {
+                  value: "Micro Enterprise Development",
+                  label: "Micro Enterprise Development",
+                },
+                { value: "Model CLF", label: "Model CLF" },
+                {
+                  value: "Non Farm Convergence",
+                  label: "Non Farm Convergence",
+                },
+                { value: "Online Market", label: "Online Market" },
+                {
+                  value: "Procurement Goods/Services",
+                  label: "Procurement Goods/Services",
+                },
+                {
+                  value: "Production & Quality Control",
+                  label: "Production & Quality Control",
+                },
+                {
+                  value: "Staff Training & Development",
+                  label: "Staff Training & Development",
+                },
+                {
+                  value: "Supply Chain & Market Linkage",
+                  label: "Supply Chain & Market Linkage",
+                },
+                {
+                  value: "SVEP & OSF (Per 10 Blocks)",
+                  label: "SVEP & OSF (Per 10 Blocks)",
+                },
+              ]}
+            />
           </div>
         </section>
 

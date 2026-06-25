@@ -88,6 +88,7 @@ export function EmployeeProfile() {
       "emergency_contact_name",
       "emergency_contact_phone",
       "emergency_contact_relation",
+      "job_seeker_id",
     ];
 
     allowedUpdateFields.forEach((field) => {
@@ -206,6 +207,12 @@ export function EmployeeProfile() {
                 value={formData.employee_type}
                 disabled
               />
+              <GovInput
+                id="theme_ro"
+                label="Theme"
+                value={formData.theme}
+                disabled
+              />
             </div>
           </section>
 
@@ -247,6 +254,12 @@ export function EmployeeProfile() {
                   { value: "F", label: "Female" },
                   { value: "O", label: "Other" },
                 ]}
+              />
+              <GovInput
+                id="job_seeker_id"
+                label="Job Seeker ID"
+                value={formData.job_seeker_id}
+                onChange={handleChange}
               />
               <GovInput
                 id="pan_number"

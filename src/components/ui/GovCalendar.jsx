@@ -1,5 +1,6 @@
 // src/components/ui/GovCalendar.jsx
 import { cn } from "../../utils/cn";
+import { ChevronLeft, ChevronRight } from "lucide-react"; // <-- Added lucide icons
 
 export function GovCalendarCell({
   date,
@@ -98,6 +99,8 @@ export function GovCalendar({
   weeks = [],
   className,
   onCellClick, // Pass click handler to table
+  onPrevMonth, // <-- Added prop
+  onNextMonth, // <-- Added prop
   ...props
 }) {
   return (
@@ -110,9 +113,35 @@ export function GovCalendar({
     >
       <table className="w-full table-fixed border-collapse">
         <caption className="border-b border-gray-200 bg-gray-50 p-4 sm:p-6 text-center">
-          <h2 className="inline-block bg-gray-900 text-white text-2xl sm:text-4xl font-bold tracking-[0.1em] px-6 sm:px-8 py-2 uppercase rounded-sm shadow-md">
-            {month} {year && <span className="text-gray-400 ml-2">{year}</span>}
-          </h2>
+          {/* Flex container safely wraps the buttons and title. 
+              Buttons ONLY render if the parent component passes the onPrev/onNext functions, 
+              ensuring backward compatibility with other components using GovCalendar. */}
+          <div className="flex items-center justify-center gap-4 sm:gap-6">
+            {onPrevMonth && (
+              <button
+                type="button"
+                onClick={onPrevMonth}
+                className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-600 focus:outline-none"
+              >
+                <ChevronLeft size={28} />
+              </button>
+            )}
+
+            <h2 className="inline-block bg-gray-900 text-white text-2xl sm:text-4xl font-bold tracking-[0.1em] px-6 sm:px-8 py-2 uppercase rounded-sm shadow-md m-0">
+              {month}{" "}
+              {year && <span className="text-gray-400 ml-2">{year}</span>}
+            </h2>
+
+            {onNextMonth && (
+              <button
+                type="button"
+                onClick={onNextMonth}
+                className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-600 focus:outline-none"
+              >
+                <ChevronRight size={28} />
+              </button>
+            )}
+          </div>
         </caption>
         <thead>
           <tr>

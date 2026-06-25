@@ -1,0 +1,16 @@
+@keyframes new-badge-flash {
+  0%, 100% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.45);
+  }
+  50% {
+    opacity: 0.55;
+    transform: translateX(-50%) scale(1.08);
+    box-shadow: 0 0 18px rgba(239, 68, 68, 0.9);
+  }
+}
+
+.new-badge {
+  animation: new-badge-flash 1s ease-in-out infinite;
+}

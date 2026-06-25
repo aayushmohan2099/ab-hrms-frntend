@@ -41,8 +41,9 @@ export function BulkCreateEmp() {
     }
   }, [selectedDept]);
 
-  // ALL Required headers for the CSV based on EmployeeOneShotSerializer
-  const requiredHeaders = [
+  // ALL headers for the CSV based on EmployeeOneShotSerializer
+  // (Even if optional like last_name, the column header should still exist in the template)
+  const templateColumns = [
     "first_name",
     "last_name",
     "email",
@@ -70,12 +71,14 @@ export function BulkCreateEmp() {
     "emergency_contact_name",
     "emergency_contact_phone",
     "emergency_contact_relation",
+    "job_seeker_id",
+    "theme",
   ];
 
   const handleDownloadTemplate = () => {
     // Generate empty CSV with headers
     const csvContent =
-      "data:text/csv;charset=utf-8," + requiredHeaders.join(",");
+      "data:text/csv;charset=utf-8," + templateColumns.join(",");
     const encodedUri = encodeURI(csvContent);
 
     // Create temporary link to trigger download
@@ -136,18 +139,25 @@ export function BulkCreateEmp() {
         <div className="md:col-span-2 space-y-6">
           <GovCard>
             <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">
-              Required File Headers
+              File Column Headers
             </h3>
             <p className="text-sm text-gray-600 mb-4">
-              Your file must exactly match these column headers (lowercase,
-              underscores):
+              Your file must contain these exact column headers (lowercase,
+              underscores).
+              <span className="font-semibold text-primary-dark ml-1">
+                Note: 'last_name' is optional and can be left blank in the rows.
+              </span>
             </p>
 
             <div className="flex flex-wrap gap-2 mb-6">
-              {requiredHeaders.map((h) => (
+              {templateColumns.map((h) => (
                 <span
                   key={h}
-                  className="bg-gray-100 border border-gray-300 text-gray-800 font-mono text-xs px-2.5 py-1 rounded"
+                  className={`border font-mono text-xs px-2.5 py-1 rounded ${
+                    h === "last_name"
+                      ? "bg-blue-50 border-blue-200 text-primary-dark"
+                      : "bg-gray-100 border-gray-300 text-gray-800"
+                  }`}
                 >
                   {h}
                 </span>
