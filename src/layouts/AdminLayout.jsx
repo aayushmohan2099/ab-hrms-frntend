@@ -26,9 +26,11 @@ export function AdminLayout() {
 
   const navLinks = [
     { path: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+    { path: "/admin/news-list", icon: FileText, label: "Latest News Section" },
     { path: "/admin/departments", icon: Building2, label: "Departments" },
     { path: "/admin/users", icon: Users, label: "Users" },
     { path: "/admin/employees", icon: Users, label: "Employees" },
+    { path: "/admin/form-16", icon: Users, label: "TDS Deduction Forms" },
     { path: "/admin/attendance", icon: Calendar, label: "Attendance" },
     {
       path: "/admin/attendance/LA/list",

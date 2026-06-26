@@ -38,7 +38,7 @@ export function Support() {
     },
     {
       q: "How are my casual and sick leaves calculated?",
-      a: "Employees are allotted a total of 15 days (CL + SL) per financial year (April - March). Any leaves taken beyond this quota will result in a pro-rated deduction from your monthly honorarium.",
+      a: "All leave applications, approvals, eligibility, and entitlements shall be governed by the Human Resource (HR) Policy/Service Rules of the respective department or organization. Employees are advised to refer to the applicable HR Manual for detailed leave provisions and compliance requirements.",
     },
     {
       q: "Whom should I contact if my attendance is marked incorrectly?",

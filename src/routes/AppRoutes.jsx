@@ -21,6 +21,9 @@ import { EmployeeCalendar } from "../pages/admin/AttenComps/EmployeeCalendar";
 import { LeaveApplicationList } from "../pages/admin/LeaveApplicationList";
 import { ApplicationDetail } from "../pages/admin/LAComps/ApplicationDetail";
 import { AdminSalarySlips } from "../pages/admin/SalarySlip";
+import { NewsBoard } from "../pages/admin/NewsBoard";
+import { TDSFormList } from "../pages/admin/TDSFormList";
+import { UploadTDSForm } from "../pages/admin/TDSFormComps/UploadTDSForm";
 
 // Manager Pages
 import { ManagerDashboard } from "../pages/manager/Dashboard";
@@ -44,6 +47,7 @@ import { LeaveApplication } from "../pages/employee/LeaveApplication";
 import { ApplyLeave } from "../pages/employee/LAComps/Apply";
 import { SalarySlip } from "../pages/employee/salarySlip";
 import { DownloadSlip } from "../pages/employee/salComps/downloadSlip";
+import { EmployeeTDSList } from "../pages/employee/TDSFormList";
 
 // Error Pages
 import { NotFound } from "../pages/errors/NotFound";
@@ -100,6 +104,9 @@ export function AppRoutes() {
             path="reports"
             element={<Placeholder title="Admin Reports" />}
           />
+          <Route path="news-list" element={<NewsBoard />} />
+          <Route path="form-16" element={<TDSFormList />} />
+          <Route path="form-16/upload" element={<UploadTDSForm />} />
         </Route>
       </Route>
 
@@ -153,6 +160,7 @@ export function AppRoutes() {
           <Route path="LA/apply/new" element={<ApplyLeave />} />
           <Route path="salary-slips" element={<SalarySlip />} />
           <Route path="salary-slips/download" element={<DownloadSlip />} />
+          <Route path="emp-form-16" element={<EmployeeTDSList />} />
         </Route>
       </Route>
 

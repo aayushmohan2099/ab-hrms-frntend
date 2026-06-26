@@ -115,4 +115,52 @@ export const empService = {
     });
     return response.data;
   },
+
+  // ============================================================
+  // TDS FORMS (FORM 16) OPERATIONS
+  // ============================================================
+
+  /**
+   * List TDS Forms (Paginated)
+   * Admins see all, Employees see their own.
+   * @param {number} page
+   * @param {number} pageSize
+   * @param {Object} filters - e.g., { financial_year: '2025-2026', quarter: 'Q1' }
+   */
+  getTDSForms: async (page = 1, pageSize = 20, filters = {}) => {
+    const response = await api.get("/form-16/tds-forms/", {
+      params: {
+        page,
+        page_size: pageSize,
+        ...filters,
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * Delete a TDS Form
+   * @param {string} thUrid - The TH URID of the TDS Form
+   */
+  deleteTDSForm: async (thUrid) => {
+    const response = await api.delete(`/form-16/tds-forms/${thUrid}/`);
+    return response.data;
+  },
+
+  /**
+   * Bulk Upload TDS Forms via ZIP file
+   * @param {FormData} formData - Contains zip_file, financial_year, quarter
+   */
+  bulkUploadTDSZIP: async (formData) => {
+    const response = await api.post(
+      "/form-16/tds-forms/bulk-upload-zip/",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      },
+    );
+    return response.data;
+  },
 };

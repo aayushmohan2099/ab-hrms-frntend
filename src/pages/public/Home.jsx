@@ -280,7 +280,7 @@ export function Home() {
                   <AnimatedCounter value={45} />
                 </div>
                 <div className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                  Mission Managers
+                  State Level Staff
                 </div>
               </GovCard>
             </motion.div>

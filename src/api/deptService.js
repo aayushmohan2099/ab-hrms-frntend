@@ -60,4 +60,71 @@ export const departmentService = {
     const response = await api.delete(`/departments/${id}/delete/`);
     return response.data;
   },
+
+  // =====================================================
+  // NEWS BOARD (PUBLIC)
+  // =====================================================
+
+  /**
+   * Get all active news.
+   */
+  getNews: async (params = {}) => {
+    const response = await api.get("/public/news/", {
+      params,
+    });
+    return response.data;
+  },
+
+  /**
+   * Get a single news item.
+   */
+  getNewsById: async (thUrid) => {
+    const response = await api.get(`/public/news/${thUrid}/`);
+    return response.data;
+  },
+
+  /**
+   * Get download URL for the attached PDF.
+   * Can be used directly in href/window.open().
+   */
+  getNewsDownloadUrl: (thUrid) => {
+    return `${api.defaults.baseURL}/public/news/${thUrid}/download/`;
+  },
+
+  /**
+   * Download the PDF as a blob.
+   */
+  downloadNewsFile: async (thUrid) => {
+    const response = await api.get(`/public/news/${thUrid}/download/`, {
+      responseType: "blob",
+    });
+    return response;
+  },
+
+  // =====================================================
+  // NEWS BOARD (ADMIN)
+  // =====================================================
+
+  createNews: async (data) => {
+    const response = await api.post("/public/news/", data, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  },
+
+  updateNews: async (thUrid, data) => {
+    const response = await api.patch(`/public/news/${thUrid}/`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  },
+
+  deleteNews: async (thUrid) => {
+    const response = await api.delete(`/public/news/${thUrid}/`);
+    return response.data;
+  },
 };

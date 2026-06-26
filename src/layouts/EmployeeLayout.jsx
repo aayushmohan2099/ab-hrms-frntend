@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { LogOut, LayoutDashboard, User, FileText, Menu, X } from "lucide-react";
+import { LogOut, LayoutDashboard, User, Users, FileText, Menu, X } from "lucide-react";
 
 export function EmployeeLayout() {
   const { user, logout } = useAuth();
@@ -24,6 +24,7 @@ export function EmployeeLayout() {
     },
     { path: "/employee/profile", icon: User, label: "Profile" },
     { path: "/employee/salary-slips", icon: FileText, label: "Salary Slips" },
+    { path: "/employee/emp-form-16", icon: Users, label: "Download Form-16" },
   ];
 
   return (
