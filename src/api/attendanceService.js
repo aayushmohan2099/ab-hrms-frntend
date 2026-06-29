@@ -196,4 +196,21 @@ export const attendanceService = {
     const response = await api.get("/attendance/manager/dashboard-stats/");
     return response.data;
   },
+
+  // ============================================================
+  // EMPLOYEE LEAVE BALANCE
+  // ============================================================
+
+  /**
+   * 7) Get Leave Balance of an Employee
+   *
+   * @param {string} employeeCode - Employee Code (e.g. EMP001)
+   * @returns {Promise<Object>}
+   */
+  getEmployeeLeaveBalance: async (employeeCode) => {
+    const response = await api.get(
+      `/attendance/leave-balance/${employeeCode}/`,
+    );
+    return response.data;
+  },
 };

@@ -39,6 +39,12 @@ export function GovCalendarCell({
       effectiveVariant = "leave_sick";
     } else if (upperReason.includes("MATERNITY")) {
       effectiveVariant = "leave_maternity";
+    } else if (upperReason.includes("EARNED") || upperReason.includes("PAID")) {
+      effectiveVariant = "leave_earned";
+    } else if (upperReason.includes("LWP")) {
+      effectiveVariant = "leave_lwp";
+    } else if (upperReason.includes("ESL")) {
+      effectiveVariant = "leave_esl";
     }
   }
 
@@ -52,6 +58,9 @@ export function GovCalendarCell({
     leave_casual: "bg-yellow-50 text-yellow-700 border-yellow-200", // Yellow for Casual
     leave_sick: "bg-indigo-50 text-indigo-700 border-indigo-200", // Indigo/Blue for Sick
     leave_maternity: "bg-pink-50 text-pink-700 border-pink-200", // Pink for Maternity
+    leave_earned: "bg-teal-50 text-teal-700 border-teal-200",
+    leave_lwp: "bg-red-100 text-red-800 border-red-300",
+    leave_esl: "bg-purple-50 text-purple-700 border-purple-200",
   };
 
   const labelVariants = {
@@ -64,6 +73,9 @@ export function GovCalendarCell({
     leave_casual: "bg-yellow-400 text-yellow-900",
     leave_sick: "bg-indigo-600 text-white",
     leave_maternity: "bg-pink-600 text-white",
+    leave_earned: "bg-teal-600 text-white",
+    leave_lwp: "bg-red-700 text-white",
+    leave_esl: "bg-purple-600 text-white",
   };
 
   return (

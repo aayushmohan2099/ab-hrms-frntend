@@ -43,14 +43,36 @@ export function PayrollList() {
   const [hasPrev, setHasPrev] = useState(false);
   const pageSize = 15;
 
+  // Date Logic for Strict Payroll Generation Rules
+  const today = new Date();
+  const currentMonth = today.getMonth() + 1;
+  const currentYearValue = today.getFullYear();
+  const lastDayOfCurrentMonth = new Date(
+    currentYearValue,
+    currentMonth,
+    0,
+  ).getDate();
+  const isLastDayOfCurrentMonth = today.getDate() === lastDayOfCurrentMonth;
+
+  // Determine safe default month
+  let defaultMonth = currentMonth;
+  let defaultYear = currentYearValue;
+  if (!isLastDayOfCurrentMonth) {
+    defaultMonth -= 1;
+    if (defaultMonth < 1) {
+      defaultMonth = 12;
+      defaultYear -= 1;
+    }
+  }
+
   // Create Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [structures, setStructures] = useState([]);
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState("");
   const [formData, setFormData] = useState({
-    pay_month: new Date().getMonth() + 1,
-    pay_year: new Date().getFullYear(),
+    pay_month: defaultMonth,
+    pay_year: defaultYear,
     salary_structure: "",
   });
 
@@ -69,13 +91,38 @@ export function PayrollList() {
     "December",
   ];
 
-  const currentYear = new Date().getFullYear();
-  const validYears = [
-    currentYear - 1,
-    currentYear,
-    currentYear + 1,
-    currentYear + 2,
-  ];
+  // Helper functions for strict validation
+  const isFuturePeriod = (y, m) => {
+    if (y > currentYearValue) return true;
+    if (y === currentYearValue && m > currentMonth) return true;
+    return false;
+  };
+
+  const isInvalidCurrentMonth = (y, m) => {
+    return (
+      y === currentYearValue && m === currentMonth && !isLastDayOfCurrentMonth
+    );
+  };
+
+  // Restrict years to current and previous
+  const validYears = [currentYearValue - 1, currentYearValue];
+
+  // Force month reset if user changes year to an invalid state
+  useEffect(() => {
+    if (
+      isFuturePeriod(formData.pay_year, formData.pay_month) ||
+      isInvalidCurrentMonth(formData.pay_year, formData.pay_month)
+    ) {
+      setFormData((prev) => ({
+        ...prev,
+        pay_month: isLastDayOfCurrentMonth
+          ? currentMonth
+          : currentMonth === 1
+            ? 12
+            : currentMonth - 1,
+      }));
+    }
+  }, [formData.pay_year, currentMonth, isLastDayOfCurrentMonth]);
 
   const fetchRuns = async () => {
     if (!departmentId) return;
@@ -102,7 +149,6 @@ export function PayrollList() {
   const fetchStructures = async () => {
     if (!departmentId) return;
     try {
-      // Fetch available salary structures for this department to link to the run
       const data = await salService.getSalaryStructures(departmentId, 1, 100);
       setStructures(data.results || []);
       if (data.results && data.results.length > 0) {
@@ -128,6 +174,24 @@ export function PayrollList() {
 
   const handleCreateRun = async (e) => {
     e.preventDefault();
+
+    const selectedPeriod = formData.pay_year * 100 + formData.pay_month;
+    const currentPeriod = currentYearValue * 100 + currentMonth;
+
+    // Guard: Future months
+    if (selectedPeriod > currentPeriod) {
+      setCreateError("Payroll cannot be generated for a future month.");
+      return;
+    }
+
+    // Guard: Current month strictly on last day
+    if (selectedPeriod === currentPeriod && !isLastDayOfCurrentMonth) {
+      setCreateError(
+        `Payroll can be generated only on the last date of ${monthNames[currentMonth - 1]}.`,
+      );
+      return;
+    }
+
     if (!formData.salary_structure) {
       setCreateError("Please select a Salary Structure.");
       return;
@@ -390,63 +454,94 @@ export function PayrollList() {
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
-            <GovSelect
-              label="Month"
-              value={formData.pay_month}
-              onChange={(e) =>
-                setFormData({ ...formData, pay_month: Number(e.target.value) })
-              }
-              options={monthNames.map((name, i) => ({
-                value: i + 1,
-                label: name,
-              }))}
-              required
-            />
-            <GovSelect
-              label="Year"
-              value={formData.pay_year}
-              onChange={(e) =>
-                setFormData({ ...formData, pay_year: Number(e.target.value) })
-              }
-              options={validYears.map((y) => ({
-                value: y,
-                label: y.toString(),
-              }))}
-              required
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <GovSelect
+                label="Month"
+                id="pay_month"
+                value={formData.pay_month}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    pay_month: Number(e.target.value),
+                  })
+                }
+                options={monthNames.map((name, i) => {
+                  const m = i + 1;
+                  const isDisabled =
+                    isFuturePeriod(formData.pay_year, m) ||
+                    isInvalidCurrentMonth(formData.pay_year, m);
+                  return {
+                    value: m,
+                    label: name,
+                    disabled: isDisabled,
+                  };
+                })}
+                required
+                disabled={createLoading}
+              />
+              {!isLastDayOfCurrentMonth &&
+                formData.pay_year === currentYearValue && (
+                  <p className="text-xs text-amber-700 mt-1 leading-tight">
+                    Current month payroll unlocks on{" "}
+                    <strong>
+                      {monthNames[currentMonth - 1]} {lastDayOfCurrentMonth}
+                    </strong>
+                    .
+                  </p>
+                )}
+            </div>
+            <div>
+              <GovSelect
+                label="Year"
+                id="pay_year"
+                value={formData.pay_year}
+                onChange={(e) =>
+                  setFormData({ ...formData, pay_year: Number(e.target.value) })
+                }
+                options={validYears.map((y) => ({
+                  value: y,
+                  label: y.toString(),
+                }))}
+                required
+                disabled={createLoading}
+              />
+            </div>
           </div>
 
-          <GovSelect
-            label="Applicable Salary Structure (Rates)"
-            value={formData.salary_structure}
-            onChange={(e) =>
-              setFormData({ ...formData, salary_structure: e.target.value })
-            }
-            required
-            disabled={loading || structures.length === 0}
-            options={
-              structures.length === 0
-                ? [
-                    {
-                      value: "",
-                      label: "No structures configured for this department",
-                    },
-                  ]
-                : [
-                    { value: "", label: "-- Select Structure --" },
-                    ...structures.map((s) => ({
-                      value: s.id,
-                      label: `Effective from: ${s.effective_from} (TDS: ${s.tds_rate}%, EPF: ${s.epf_rate}%, ESIC: ${s.esic_rate}%)`,
-                    })),
-                  ]
-            }
-          />
-          <p className="text-xs text-gray-500 -mt-2">
-            The selected salary structure dictates the deduction percentages for
-            this specific month's payroll processing. The engine will
-            auto-compute attendance directly.
-          </p>
+          <div className="pt-2">
+            <GovSelect
+              label="Applicable Salary Structure (Rates)"
+              id="salary_structure"
+              value={formData.salary_structure}
+              onChange={(e) =>
+                setFormData({ ...formData, salary_structure: e.target.value })
+              }
+              required
+              disabled={createLoading || structures.length === 0}
+              options={
+                structures.length === 0
+                  ? [
+                      {
+                        value: "",
+                        label: "No structures configured for this department",
+                      },
+                    ]
+                  : [
+                      { value: "", label: "-- Select Structure --" },
+                      ...structures.map((s) => ({
+                        value: s.id,
+                        label: `Effective from: ${s.effective_from} (TDS: ${s.tds_rate}%, EPF: ${s.epf_rate}%, ESIC: ${s.esic_rate}%)`,
+                      })),
+                    ]
+              }
+            />
+            <p className="text-xs text-gray-500 mt-1 leading-tight">
+              The selected salary structure dictates the deduction percentages
+              for this specific month's payroll processing. The engine will
+              auto-compute attendance directly.
+            </p>
+          </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-6">
             <GovButton
@@ -460,7 +555,12 @@ export function PayrollList() {
             <GovButton
               type="submit"
               variant="primary"
-              disabled={createLoading || structures.length === 0}
+              disabled={
+                createLoading ||
+                structures.length === 0 ||
+                isFuturePeriod(formData.pay_year, formData.pay_month) ||
+                isInvalidCurrentMonth(formData.pay_year, formData.pay_month)
+              }
             >
               {createLoading ? "Initializing..." : "Create & Compute Run"}
             </GovButton>

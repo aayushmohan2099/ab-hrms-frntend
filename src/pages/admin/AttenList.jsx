@@ -218,6 +218,7 @@ export function AttenList() {
                               month: selectedMonth,
                               year: selectedYear,
                               records: emp.daily_records,
+                              leaveApps: emp.current_month_records, 
                               name: `${emp.first_name} ${emp.last_name}`,
                             },
                           })

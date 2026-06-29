@@ -75,6 +75,19 @@ export function BulkCreateEmp() {
     "theme",
   ];
 
+  const requiredColumns = [
+    "first_name",
+    "last_name",
+    "email",
+    "employee_type",
+    "department_id",
+    "designation_id",
+    "date_of_joining",
+    "date_of_birth",
+    "gender",
+    "monthly_honorarium",
+  ];
+
   const handleDownloadTemplate = () => {
     // Generate empty CSV with headers
     const csvContent =
@@ -144,13 +157,18 @@ export function BulkCreateEmp() {
             <p className="text-sm text-gray-600 mb-4">
               Your file must contain these exact column headers (lowercase,
               underscores).
+              <br />
               <span className="font-semibold text-primary-dark ml-1">
-                Note: 'last_name' is optional and can be left blank in the rows.
+                Note: Employee Types are OUTSOURCED or CONTRACT
+              </span>
+              <br />
+              <span className="font-semibold text-primary-dark ml-1">
+                Note: Genders are M for Male , F for Female and O for Others.
               </span>
             </p>
 
             <div className="flex flex-wrap gap-2 mb-6">
-              {templateColumns.map((h) => (
+              {requiredColumns.map((h) => (
                 <span
                   key={h}
                   className={`border font-mono text-xs px-2.5 py-1 rounded ${

@@ -9,6 +9,7 @@ import { GovButton } from "../../../components/ui/GovButton";
 import { GovCalendar } from "../../../components/ui/GovCalendar";
 import { ArrowLeft, Save, Calendar as CalendarIcon } from "lucide-react";
 import { useAuth } from "../../../contexts/AuthContext";
+import { GovInput } from "../../../components/ui/GovInput";
 
 export function HolidayPattern() {
   const { user } = useAuth();
@@ -27,6 +28,7 @@ export function HolidayPattern() {
   // Calendar & Action State
   const [calendarWeeks, setCalendarWeeks] = useState([]);
   const [selectedHolidays, setSelectedHolidays] = useState([]);
+  const [holidayReason, setHolidayReason] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -145,11 +147,13 @@ export function HolidayPattern() {
           ? Number(user.department_id)
           : Number(selectedDept),
         dates: selectedHolidays,
+        holiday_reason: holidayReason,
       };
 
       const res = await attendanceService.bulkMarkHolidays(payload);
       setSuccess(res.detail || "Holidays marked successfully.");
-      setSelectedHolidays([]); // Clear selection after successful save
+      setSelectedHolidays([]);
+      setHolidayReason("");
     } catch (err) {
       setError(
         err.response?.data?.detail ||
@@ -251,6 +255,15 @@ export function HolidayPattern() {
                 <span className="text-primary-dark font-bold text-lg">
                   {selectedHolidays.length}
                 </span>
+              </div>
+              <div className="mb-4">
+                <GovInput
+                  id="holiday_reason"
+                  label="Reason / Occasion"
+                  placeholder="e.g., Diwali, Independence Day..."
+                  value={holidayReason}
+                  onChange={(e) => setHolidayReason(e.target.value)}
+                />
               </div>
               <GovButton
                 variant="primary"

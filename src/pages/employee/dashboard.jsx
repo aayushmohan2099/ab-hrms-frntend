@@ -55,10 +55,8 @@ export function EmployeeDashboard() {
 
   useEffect(() => {
     const fetchAttendance = async () => {
-      // Need user's department to use the department monthly endpoint
-      // We assume user context has department_id. If not, the API endpoint needs adjusting.
       const deptId = user?.department_id;
-      const empCode = user?.username; // Username acts as the employee code
+      const empCode = user?.employee_code || user?.username;
 
       if (!deptId || !empCode) {
         setError(
@@ -77,11 +75,20 @@ export function EmployeeDashboard() {
           selectedYear,
         );
 
-        // Find the logged-in employee's specific record from the department payload
         const myRecord = data.find((emp) => emp.employee_code === empCode);
-        const records = myRecord ? myRecord.daily_records : [];
+        const dailyRecords = myRecord ? myRecord.daily_records : [];
+        const leaveApps = myRecord ? myRecord.current_month_records : []; // Detailed leave apps from backend
 
-        // Build the calendar grid
+        // Map shortcodes to full display names
+        const leaveNames = {
+          MATERNITY: "Maternity Leave (ML)",
+          CASUAL: "Casual Leave (CL)",
+          SICK: "Sick Leave (SL)",
+          EARNED: "Earned Leave (EL)",
+          LWP: "Leave Without Pay (LWP)",
+          ESL: "Extraordinary Sick Leave (ESL)",
+        };
+
         const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
         const firstDayIndex = new Date(
           selectedYear,
@@ -92,38 +99,48 @@ export function EmployeeDashboard() {
         let currentWeek = new Array(7).fill(null);
         const weeks = [];
 
-        // Pad empty days at start of month
         for (let i = 0; i < firstDayIndex; i++) {
           currentWeek[i] = null;
         }
 
-        // Fill actual days
         for (let day = 1; day <= daysInMonth; day++) {
           const dayIndex = (firstDayIndex + day - 1) % 7;
-
           const dateStr = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-          const dailyRecord = records.find((r) => r.date === dateStr);
 
-          const currentStatus = dailyRecord?.status || "PENDING";
-
+          const dailyRecord = dailyRecords.find((r) => r.date === dateStr);
+          let currentStatus = dailyRecord?.status || "PENDING";
           let variant = "neutral";
           let displayReason = "";
 
-          if (currentStatus === "PRESENT") {
-            variant = "success";
-            displayReason = "Present";
-          } else if (currentStatus === "ABSENT") {
-            variant = "danger";
-            displayReason = "Absent";
-          } else if (
-            currentStatus === "WEEKEND" ||
-            currentStatus === "HOLIDAY"
-          ) {
-            variant = "primary";
-            displayReason = currentStatus;
-          } else if (currentStatus.includes("LEAVE")) {
-            variant = "success";
-            displayReason = currentStatus.replace("_", " ");
+          // Check if this specific date falls within an approved Leave Application
+          const overlappingLeave = leaveApps.find(
+            (leave) => dateStr >= leave.start_date && dateStr <= leave.end_date,
+          );
+
+          if (overlappingLeave) {
+            // Override with specific leave details
+            variant = "leave_" + overlappingLeave.leave_type.toLowerCase();
+            displayReason =
+              leaveNames[overlappingLeave.leave_type] ||
+              overlappingLeave.leave_type;
+          } else {
+            // Standard daily record logic
+            if (currentStatus === "PRESENT") {
+              variant = "success";
+              displayReason = "Present";
+            } else if (currentStatus === "ABSENT") {
+              variant = "danger";
+              displayReason = "Absent";
+            } else if (
+              currentStatus === "WEEKEND" ||
+              currentStatus === "HOLIDAY"
+            ) {
+              variant = "weekend";
+              displayReason = dailyRecord?.holiday_reason || currentStatus;
+            } else if (currentStatus.includes("LEAVE")) {
+              variant = "success";
+              displayReason = currentStatus.replace("_", " ");
+            }
           }
 
           currentWeek[dayIndex] = {
@@ -133,7 +150,6 @@ export function EmployeeDashboard() {
             reason: displayReason,
           };
 
-          // Push week to array if it's Saturday or last day
           if (dayIndex === 6 || day === daysInMonth) {
             weeks.push([...currentWeek]);
             currentWeek = new Array(7).fill(null);

@@ -16,6 +16,7 @@ export function EmployeeCalendar() {
     month: initialMonth,
     year: initialYear,
     records: initialRecords,
+    leaveApps: initialLeaveApps,
     name,
   } = location.state || {};
 
@@ -27,8 +28,10 @@ export function EmployeeCalendar() {
     initialYear || new Date().getFullYear(),
   );
   const [currentRecords, setCurrentRecords] = useState(initialRecords || []);
+  const [currentLeaveApps, setCurrentLeaveApps] = useState(
+    initialLeaveApps || [],
+  );
   const [isFetchingMonth, setIsFetchingMonth] = useState(false); // loader for month switching
-
   const [calendarWeeks, setCalendarWeeks] = useState([]);
   const [modifiedDates, setModifiedDates] = useState({}); // Track which dates the user manually toggled
   const [saving, setSaving] = useState(false);
@@ -73,7 +76,9 @@ export function EmployeeCalendar() {
         newMonth,
       );
       setCurrentRecords(data || []);
-      setModifiedDates({}); // Clear tracking when leaving month
+      // Reset or set leave apps based on response payload format
+      setCurrentLeaveApps(data?.current_month_records || []);
+      setModifiedDates({});
     } catch (err) {
       console.error("Failed to fetch attendance:", err);
       alert("Failed to load attendance for the selected month.");
@@ -101,34 +106,84 @@ export function EmployeeCalendar() {
       currentWeek[i] = null;
     }
 
+    // Safely extract leave applications from the currentRecords (if attached by the new backend logic)
+    // The currentRecords state holds the list of daily records, but the new backend view
+    // structure might pass the leave apps alongside it. If the API returns the employee object directly,
+    // currentRecords might be the array inside `daily_records` or `current_month_records`.
+    // Assuming `initialRecords` was passed as `emp.current_month_records` and leave apps are not in this array,
+    // we need to rely on the daily record's status for the manager view unless we refactor the parent list view to pass leave apps.
+    // For now, we use the specific leave names mapped below to override the status.
+    const leaveNames = {
+      MATERNITY: "Maternity Leave (ML)",
+      CASUAL: "Casual Leave (CL)",
+      SICK: "Sick Leave (SL)",
+      EARNED: "Earned Leave (EL)",
+      LWP: "Leave Without Pay (LWP)",
+      ESL: "Extraordinary Sick Leave (ESL)",
+    };
+
     // Fill actual days
     for (let day = 1; day <= daysInMonth; day++) {
       const dayIndex = (firstDayIndex + day - 1) % 7;
 
-      // Find backend record for this date
-      // Formatting date strictly to YYYY-MM-DD
       const dateStr = `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
       const record = currentRecords.find((r) => r.date === dateStr);
 
-      // Default to what backend says, but override if user modified it in UI
       const currentStatus =
         modifiedDates[dateStr] || record?.status || "PENDING";
 
       let variant = "neutral";
       let displayReason = "";
 
-      if (currentStatus === "PRESENT") {
-        variant = "success";
-        displayReason = "Present";
-      } else if (currentStatus === "ABSENT") {
-        variant = "danger";
-        displayReason = "Absent";
-      } else if (currentStatus === "WEEKEND" || currentStatus === "HOLIDAY") {
-        variant = "weekend";
-        displayReason = currentStatus;
-      } else if (currentStatus.includes("LEAVE")) {
-        variant = "success";
-        displayReason = currentStatus.replace("_", " ");
+      // 1. Check if this specific date falls within an approved Leave Application first
+      const overlappingLeave = currentLeaveApps.find(
+        (leave) => dateStr >= leave.start_date && dateStr <= leave.end_date,
+      );
+
+      if (overlappingLeave) {
+        // Override with specific leave details from the LeaveApplication object
+        variant = "leave_" + overlappingLeave.leave_type.toLowerCase();
+        displayReason =
+          leaveNames[overlappingLeave.leave_type] ||
+          overlappingLeave.leave_type;
+      } else {
+        // 2. Standard daily record fallback logic
+        if (currentStatus === "PRESENT") {
+          variant = "success";
+          displayReason = "Present";
+        } else if (currentStatus === "ABSENT") {
+          variant = "danger";
+          displayReason = "Absent";
+        } else if (currentStatus === "WEEKEND" || currentStatus === "HOLIDAY") {
+          variant = "weekend";
+          displayReason = record?.holiday_reason || currentStatus;
+        } else if (
+          currentStatus === "MATERNITY" ||
+          currentStatus === "MATERNITY_LEAVE" ||
+          currentStatus === "CASUAL" ||
+          currentStatus === "CASUAL_LEAVE" ||
+          currentStatus === "SICK" ||
+          currentStatus === "SICK_LEAVE" ||
+          currentStatus === "EARNED" ||
+          currentStatus === "EARNED_LEAVE" ||
+          currentStatus === "PAID_LEAVE" ||
+          currentStatus === "LWP" ||
+          currentStatus === "LEAVE_WITHOUT_PAY" ||
+          currentStatus === "ESL" ||
+          currentStatus === "EXTRAORDINARY_SICK_LEAVE"
+        ) {
+          const baseKey = currentStatus
+            .replace("_LEAVE", "")
+            .replace("PAID", "EARNED")
+            .replace("EXTRAORDINARY_SICK", "ESL")
+            .replace("LEAVE_WITHOUT_PAY", "LWP");
+          variant = "leave_" + baseKey.toLowerCase();
+          displayReason =
+            leaveNames[baseKey] || currentStatus.replace("_", " ");
+        } else if (currentStatus.includes("LEAVE")) {
+          variant = "success";
+          displayReason = currentStatus.replace("_", " ");
+        }
       }
 
       currentWeek[dayIndex] = {
@@ -136,12 +191,11 @@ export function EmployeeCalendar() {
         fullDate: dateStr,
         originalStatus: record?.status,
         currentStatus: currentStatus,
-        isLocked: record?.is_locked, // E.g. approved leave or previous manual override
+        isLocked: record?.is_locked || !!overlappingLeave, // Lock cell if it's an approved leave
         variant: variant,
         reason: displayReason,
       };
 
-      // Push week to array if it's Saturday or last day
       if (dayIndex === 6 || day === daysInMonth) {
         weeks.push([...currentWeek]);
         currentWeek = new Array(7).fill(null);
@@ -154,6 +208,7 @@ export function EmployeeCalendar() {
     currentMonth,
     currentYear,
     currentRecords,
+    currentLeaveApps,
     modifiedDates,
     navigate,
   ]);

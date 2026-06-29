@@ -10,9 +10,35 @@ export function CreateRunModal({ isOpen, onClose, departmentId, onSuccess }) {
   const [error, setError] = useState("");
   const [structures, setStructures] = useState([]);
 
+  const today = new Date();
+  const currentMonth = today.getMonth() + 1;
+  const currentYearValue = today.getFullYear();
+
+  // Last day of the current month
+  const lastDayOfCurrentMonth = new Date(
+    currentYearValue,
+    currentMonth,
+    0,
+  ).getDate();
+
+  const isLastDayOfCurrentMonth = today.getDate() === lastDayOfCurrentMonth;
+
+  // Initialize with the most appropriate valid month.
+  // If it's not the last day of the current month, default to the previous month.
+  let defaultMonth = currentMonth;
+  let defaultYear = currentYearValue;
+
+  if (!isLastDayOfCurrentMonth) {
+    defaultMonth -= 1;
+    if (defaultMonth < 1) {
+      defaultMonth = 12;
+      defaultYear -= 1;
+    }
+  }
+
   const [formData, setFormData] = useState({
-    pay_month: new Date().getMonth() + 1,
-    pay_year: new Date().getFullYear(),
+    pay_month: defaultMonth,
+    pay_year: defaultYear,
     salary_structure: "",
   });
 
@@ -31,13 +57,23 @@ export function CreateRunModal({ isOpen, onClose, departmentId, onSuccess }) {
     "December",
   ];
 
-  const currentYear = new Date().getFullYear();
-  const validYears = [
-    currentYear - 1,
-    currentYear,
-    currentYear + 1,
-    currentYear + 2,
-  ];
+  // Helper functions for strict validation
+  const isFuturePeriod = (y, m) => {
+    if (y > currentYearValue) return true;
+    if (y === currentYearValue && m > currentMonth) return true;
+    return false;
+  };
+
+  const isInvalidCurrentMonth = (y, m) => {
+    return (
+      y === currentYearValue && m === currentMonth && !isLastDayOfCurrentMonth
+    );
+  };
+
+  // Dynamically calculate valid years. We no longer restrict strictly to currentYear - 2.
+  // Instead, we just need the user to be able to select the current year or the previous year
+  // (to cover January payrolls generated in the new year).
+  const validYears = [currentYearValue - 1, currentYearValue];
 
   // Fetch available salary structures when the modal opens
   useEffect(() => {
@@ -72,8 +108,42 @@ export function CreateRunModal({ isOpen, onClose, departmentId, onSuccess }) {
     }
   }, [isOpen, departmentId]);
 
+  // When year changes, if the current month selection becomes invalid, reset it to the closest valid month
+  useEffect(() => {
+    if (
+      isFuturePeriod(formData.pay_year, formData.pay_month) ||
+      isInvalidCurrentMonth(formData.pay_year, formData.pay_month)
+    ) {
+      setFormData((prev) => ({
+        ...prev,
+        pay_month: isLastDayOfCurrentMonth
+          ? currentMonth
+          : currentMonth === 1
+            ? 12
+            : currentMonth - 1,
+      }));
+    }
+  }, [formData.pay_year, currentMonth, isLastDayOfCurrentMonth]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const selectedPeriod = formData.pay_year * 100 + formData.pay_month;
+    const currentPeriod = currentYearValue * 100 + currentMonth;
+
+    // Future months are never allowed
+    if (selectedPeriod > currentPeriod) {
+      setError("Payroll cannot be generated for a future month.");
+      return;
+    }
+
+    // Current month only on the last day
+    if (selectedPeriod === currentPeriod && !isLastDayOfCurrentMonth) {
+      setError(
+        `Payroll can be generated only on the last date of ${monthNames[currentMonth - 1]}.`,
+      );
+      return;
+    }
 
     if (!formData.salary_structure) {
       setError(
@@ -115,20 +185,39 @@ export function CreateRunModal({ isOpen, onClose, departmentId, onSuccess }) {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <GovSelect
-            id="pay_month"
-            label="Payroll Month"
-            value={formData.pay_month}
-            onChange={(e) =>
-              setFormData({ ...formData, pay_month: Number(e.target.value) })
-            }
-            options={monthNames.map((name, i) => ({
-              value: i + 1,
-              label: name,
-            }))}
-            required
-            disabled={loading}
-          />
+          <div>
+            <GovSelect
+              id="pay_month"
+              label="Payroll Month"
+              value={formData.pay_month}
+              onChange={(e) =>
+                setFormData({ ...formData, pay_month: Number(e.target.value) })
+              }
+              options={monthNames.map((name, i) => {
+                const m = i + 1;
+                // If it's a future month OR it's the current month but not the last day, disable it.
+                // However, we only disable future months for the CURRENT year. If the user selects a previous year, all months are valid.
+                const isDisabled =
+                  isFuturePeriod(formData.pay_year, m) ||
+                  isInvalidCurrentMonth(formData.pay_year, m);
+
+                return {
+                  value: m,
+                  label: name,
+                  disabled: isDisabled,
+                };
+              })}
+              required
+              disabled={loading}
+            />
+            {!isLastDayOfCurrentMonth &&
+              formData.pay_year === currentYearValue && (
+                <p className="text-xs text-amber-700 mt-1">
+                  Payroll for the current month unlocks on the last date of{" "}
+                  <strong>{monthNames[currentMonth - 1]}</strong>.
+                </p>
+              )}
+          </div>
           <GovSelect
             id="pay_year"
             label="Payroll Year"
@@ -187,7 +276,12 @@ export function CreateRunModal({ isOpen, onClose, departmentId, onSuccess }) {
           <GovButton
             type="submit"
             variant="primary"
-            disabled={loading || structures.length === 0}
+            disabled={
+              loading ||
+              structures.length === 0 ||
+              isFuturePeriod(formData.pay_year, formData.pay_month) ||
+              isInvalidCurrentMonth(formData.pay_year, formData.pay_month)
+            }
           >
             {loading ? "Initializing..." : "Create Run Shell"}
           </GovButton>

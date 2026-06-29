@@ -185,8 +185,7 @@ export function CreateUser({ onSuccess, onCancel }) {
           options={[
             { value: "PERMANENT", label: "Permanent" },
             { value: "CONTRACT", label: "Contract" },
-            { value: "INTERN", label: "Intern" },
-            { value: "CONSULTANT", label: "Consultant" },
+            { value: "OUTSOURCED", label: "Out Sourced" },
           ]}
         />
 
