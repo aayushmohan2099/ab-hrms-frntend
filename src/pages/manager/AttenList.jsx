@@ -1,5 +1,5 @@
 // src/pages/manager/AttenList.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { departmentService } from "../../api/deptService";
 import { attendanceService } from "../../api/attendanceService";
@@ -12,8 +12,16 @@ import {
   GovTableRow,
   GovTableCell,
 } from "../../components/ui/GovTable";
-import { Calendar, Upload, RefreshCw } from "lucide-react";
+import {
+  Calendar,
+  Upload,
+  RefreshCw,
+  Download,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
+import * as XLSX from "xlsx"; // Ensure you have installed xlsx: npm install xlsx
 
 export function AttenList() {
   const { user } = useAuth();
@@ -33,6 +41,10 @@ export function AttenList() {
   const [attendanceData, setAttendanceData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const recordsPerPage = 15;
 
   // Years: 2025 - 2029
   const validYears = [2025, 2026, 2027, 2028, 2029];
@@ -75,6 +87,7 @@ export function AttenList() {
         selectedYear,
       );
       setAttendanceData(data || []);
+      setCurrentPage(1); // Reset to first page on new fetch
     } catch (err) {
       setError("Failed to load attendance data.");
     } finally {
@@ -86,6 +99,52 @@ export function AttenList() {
   useEffect(() => {
     fetchAttendance();
   }, [selectedDept, selectedMonth, selectedYear]);
+
+  // Derived Pagination State
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * recordsPerPage;
+    return attendanceData.slice(startIndex, startIndex + recordsPerPage);
+  }, [attendanceData, currentPage]);
+
+  const totalPages = Math.ceil(attendanceData.length / recordsPerPage) || 1;
+
+  // Export to Excel Functionality
+  const handleExportExcel = () => {
+    if (!attendanceData || attendanceData.length === 0) {
+      alert("No data available to export.");
+      return;
+    }
+
+    // 1. Format the data for Excel
+    const exportData = attendanceData.map((emp, index) => ({
+      "S.No.": index + 1,
+      "Employee Code": emp.employee_code,
+      "Employee Name": emp.first_name + " " + emp.last_name,
+      Designation: emp.designation_name,
+      Theme: emp.theme || "Not Set",
+      "Present/Effective Days": emp.present_summary,
+    }));
+
+    // 2. Create Workbook and Worksheet
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
+
+    // 3. Generate file name based on filters
+    let deptName = "DEPT";
+    if (user?.department_id && String(user.department_id) === selectedDept) {
+      deptName = user.department_name;
+    } else {
+      deptName =
+        departments.find((d) => d.id === Number(selectedDept))?.code || "DEPT";
+    }
+    const monthName =
+      validMonths.find((m) => m.value === selectedMonth)?.label || "Month";
+    const fileName = `Attendance_${deptName}_${monthName}_${selectedYear}.xlsx`;
+
+    // 4. Download
+    XLSX.writeFile(workbook, fileName);
+  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -115,12 +174,21 @@ export function AttenList() {
           >
             <Calendar size={16} /> Set Holiday Pattern
           </GovButton>
+
+          <GovButton
+            variant="primary"
+            className="gap-2"
+            onClick={handleExportExcel}
+            disabled={loading || attendanceData.length === 0}
+          >
+            <Download size={16} /> Export to Excel
+          </GovButton>
         </div>
       </div>
 
-      <GovCard className="p-0 overflow-hidden">
+      <GovCard className="p-0 overflow-hidden flex flex-col min-h-[500px]">
         {/* Filters */}
-        <div className="p-4 border-b border-gray-200 bg-gray-50 grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="p-4 border-b border-gray-200 bg-gray-50 grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0">
           <div className="md:col-span-2">
             {user?.department_id ? (
               <div className="md:col-span-2">
@@ -167,11 +235,11 @@ export function AttenList() {
 
         {/* Content */}
         {!selectedDept ? (
-          <div className="p-12 text-center text-gray-500">
+          <div className="p-12 text-center text-gray-500 flex-1 flex items-center justify-center">
             Select a department to view attendance.
           </div>
         ) : error ? (
-          <div className="p-8 text-center text-danger font-medium flex flex-col items-center gap-3">
+          <div className="p-8 text-center text-danger font-medium flex flex-col items-center justify-center gap-3 flex-1">
             <p>{error}</p>
             <GovButton
               variant="outline"
@@ -183,76 +251,146 @@ export function AttenList() {
             </GovButton>
           </div>
         ) : (
-          <GovTable>
-            <GovTableHeader>
-              <GovTableCell isHeader>Emp Code</GovTableCell>
-              <GovTableCell isHeader>Employee Name</GovTableCell>
-              <GovTableCell isHeader>Designation</GovTableCell>
-              <GovTableCell isHeader className="text-center">
-                Effective Days
-              </GovTableCell>
-              <GovTableCell isHeader className="text-right">
-                Actions
-              </GovTableCell>
-            </GovTableHeader>
-            <tbody className="divide-y divide-gray-100">
-              {loading ? (
-                <GovTableRow hover={false}>
-                  <GovTableCell
-                    colSpan={5}
-                    className="h-16 text-center text-gray-500"
-                  >
-                    Loading...
+          <>
+            <div className="flex-1 overflow-x-auto">
+              <GovTable>
+                <GovTableHeader>
+                  <GovTableCell isHeader className="w-16 text-center">
+                    S.No.
                   </GovTableCell>
-                </GovTableRow>
-              ) : attendanceData.length === 0 ? (
-                <GovTableRow hover={false}>
-                  <GovTableCell
-                    colSpan={5}
-                    className="h-32 text-center text-gray-500"
-                  >
-                    No data found.
+                  <GovTableCell isHeader>Emp Code</GovTableCell>
+                  <GovTableCell isHeader>Employee Name</GovTableCell>
+                  <GovTableCell isHeader>Designation</GovTableCell>
+                  <GovTableCell isHeader>Theme</GovTableCell>
+                  <GovTableCell isHeader className="text-center">
+                    Present Days / Working Days
                   </GovTableCell>
-                </GovTableRow>
-              ) : (
-                attendanceData.map((emp) => (
-                  <GovTableRow key={emp.employee_code}>
-                    <GovTableCell className="font-mono font-bold text-gray-700">
-                      {emp.employee_code}
-                    </GovTableCell>
-                    <GovTableCell className="font-semibold text-gray-900">
-                      {emp.first_name} {emp.last_name}
-                    </GovTableCell>
-                    <GovTableCell>{emp.designation_name}</GovTableCell>
-                    <GovTableCell className="text-center font-bold text-primary-dark text-lg">
-                      {emp.present_summary}
-                    </GovTableCell>
-                    <GovTableCell className="text-right">
-                      <GovButton
-                        variant="outline"
-                        size="sm"
-                        className="gap-2 text-xs"
-                        onClick={() =>
-                          navigate("/manager/attendance/calendar", {
-                            state: {
-                              empCode: emp.employee_code,
-                              month: selectedMonth,
-                              year: selectedYear,
-                              records: emp.daily_records,
-                              leaveApps: emp.current_month_records,
-                              name: `${emp.first_name} ${emp.last_name}`,
-                            },
-                          })
-                        }
+                  <GovTableCell isHeader className="text-right">
+                    Actions
+                  </GovTableCell>
+                </GovTableHeader>
+                <tbody className="divide-y divide-gray-100">
+                  {loading ? (
+                    <GovTableRow hover={false}>
+                      <GovTableCell
+                        colSpan={7}
+                        className="h-16 text-center text-gray-500"
                       >
-                        <Calendar size={14} /> View Calendar
-                      </GovButton>
-                    </GovTableCell>
-                  </GovTableRow>
-                ))
-              )}
-            </tbody>
-          </GovTable>
+                        Loading...
+                      </GovTableCell>
+                    </GovTableRow>
+                  ) : attendanceData.length === 0 ? (
+                    <GovTableRow hover={false}>
+                      <GovTableCell
+                        colSpan={7}
+                        className="h-32 text-center text-gray-500"
+                      >
+                        No data found.
+                      </GovTableCell>
+                    </GovTableRow>
+                  ) : (
+                    paginatedData.map((emp, index) => {
+                      // Calculate global serial number across pages
+                      const serialNumber =
+                        (currentPage - 1) * recordsPerPage + index + 1;
+
+                      return (
+                        <GovTableRow key={emp.employee_code}>
+                          <GovTableCell className="text-center text-gray-500 text-sm">
+                            {serialNumber}
+                          </GovTableCell>
+                          <GovTableCell className="font-mono font-bold text-gray-700">
+                            {emp.employee_code}
+                          </GovTableCell>
+                          <GovTableCell className="font-semibold text-gray-900">
+                            {emp.first_name} {emp.last_name}
+                          </GovTableCell>
+                          <GovTableCell>{emp.designation_name}</GovTableCell>
+                          <GovTableCell>{emp.theme || "Not Set"}</GovTableCell>
+                          <GovTableCell className="text-center font-bold text-primary-dark text-lg">
+                            {emp.present_summary}
+                          </GovTableCell>
+                          <GovTableCell className="text-right">
+                            <GovButton
+                              variant="outline"
+                              size="sm"
+                              className="gap-2 text-xs"
+                              onClick={() =>
+                                navigate("/manager/attendance/calendar", {
+                                  state: {
+                                    empCode: emp.employee_code,
+                                    month: selectedMonth,
+                                    year: selectedYear,
+                                    records: emp.daily_records,
+                                    leaveApps: emp.current_month_records,
+                                    name: `${emp.first_name} ${emp.last_name}`,
+                                  },
+                                })
+                              }
+                            >
+                              <Calendar size={14} /> View Calendar
+                            </GovButton>
+                          </GovTableCell>
+                        </GovTableRow>
+                      );
+                    })
+                  )}
+                </tbody>
+              </GovTable>
+            </div>
+
+            {/* Pagination Controls */}
+            {!loading && attendanceData.length > 0 && (
+              <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50 shrink-0">
+                <span className="text-sm text-gray-600">
+                  Showing{" "}
+                  <span className="font-semibold text-gray-900">
+                    {Math.min(
+                      (currentPage - 1) * recordsPerPage + 1,
+                      attendanceData.length,
+                    )}
+                  </span>{" "}
+                  to{" "}
+                  <span className="font-semibold text-gray-900">
+                    {Math.min(
+                      currentPage * recordsPerPage,
+                      attendanceData.length,
+                    )}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-semibold text-gray-900">
+                    {attendanceData.length}
+                  </span>{" "}
+                  records
+                </span>
+                <div className="flex gap-2">
+                  <GovButton
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="gap-1"
+                  >
+                    <ChevronLeft size={16} /> Prev
+                  </GovButton>
+                  <div className="flex items-center px-3 text-sm font-medium text-gray-700">
+                    Page {currentPage} of {totalPages}
+                  </div>
+                  <GovButton
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                    className="gap-1"
+                  >
+                    Next <ChevronRight size={16} />
+                  </GovButton>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </GovCard>
     </div>

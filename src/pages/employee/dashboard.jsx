@@ -48,7 +48,7 @@ export function EmployeeDashboard() {
 
   const getFilteredMonths = () => {
     if (selectedYear == 2026) {
-      return validMonths.filter((m) => m.value >= 6); // June onwards for 2026
+      return validMonths.filter((m) => m.value >= 1); // February onwards for 2026
     }
     return validMonths;
   };
@@ -137,6 +137,29 @@ export function EmployeeDashboard() {
             ) {
               variant = "weekend";
               displayReason = dailyRecord?.holiday_reason || currentStatus;
+            } else if (
+              currentStatus === "MATERNITY" ||
+              currentStatus === "MATERNITY_LEAVE" ||
+              currentStatus === "CASUAL" ||
+              currentStatus === "CASUAL_LEAVE" ||
+              currentStatus === "SICK" ||
+              currentStatus === "SICK_LEAVE" ||
+              currentStatus === "EARNED" ||
+              currentStatus === "EARNED_LEAVE" ||
+              currentStatus === "PAID_LEAVE" ||
+              currentStatus === "LWP" ||
+              currentStatus === "LEAVE_WITHOUT_PAY" ||
+              currentStatus === "ESL" ||
+              currentStatus === "EXTRAORDINARY_SICK_LEAVE"
+            ) {
+              const baseKey = currentStatus
+                .replace("_LEAVE", "")
+                .replace("PAID", "EARNED")
+                .replace("EXTRAORDINARY_SICK", "ESL")
+                .replace("LEAVE_WITHOUT_PAY", "LWP");
+              variant = "leave_" + baseKey.toLowerCase();
+              displayReason =
+                leaveNames[baseKey] || currentStatus.replace("_", " ");
             } else if (currentStatus.includes("LEAVE")) {
               variant = "success";
               displayReason = currentStatus.replace("_", " ");
@@ -215,7 +238,6 @@ export function EmployeeDashboard() {
           month={monthNames[selectedMonth - 1]}
           year={selectedYear}
           weeks={calendarWeeks}
-          // Intentionally omitting onCellClick as this is view-only for the employee
         />
       )}
     </div>

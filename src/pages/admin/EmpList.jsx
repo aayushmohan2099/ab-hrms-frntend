@@ -24,8 +24,10 @@ import {
   ChevronRight,
   RefreshCw,
   Eye,
+  Download,
 } from "lucide-react";
 import { EmpDetail } from "./EmpComps/EmpDetail";
+import * as XLSX from "xlsx";
 
 export function EmpList() {
   const navigate = useNavigate();
@@ -39,6 +41,7 @@ export function EmpList() {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [exporting, setExporting] = useState(false);
 
   // Pagination
   const [page, setPage] = useState(1);
@@ -139,6 +142,63 @@ export function EmpList() {
     }
   };
 
+  // Export Logic
+  const handleExportExcel = async () => {
+    if (!selectedDept) {
+      alert("Please select a department to export.");
+      return;
+    }
+
+    setExporting(true);
+    try {
+      // Fetch ALL records for the selected filters bypassing pagination limits
+      const filters = { department: selectedDept };
+      if (selectedDesig) filters.designation = selectedDesig;
+
+      // Requesting a high page size to get all records (assuming standard DB sizes)
+      const data = await empService.getEmployees(1, 10000, filters);
+      const allEmployees = data.results || [];
+
+      if (allEmployees.length === 0) {
+        alert("No employees found to export.");
+        setExporting(false);
+        return;
+      }
+
+      // Format data for Excel
+      const exportData = allEmployees.map((emp, index) => ({
+        "S.No.": index + 1,
+        "Employee Code": emp.employee_code,
+        "First Name": emp.first_name,
+        "Last Name": emp.last_name,
+        Email: emp.email || "N/A",
+        Phone: emp.phone_number || "N/A",
+        Department: emp.department_name,
+        Designation: emp.designation_name,
+        "Employment Type": emp.employee_type,
+        "Date of Joining": emp.date_of_joining || "N/A",
+      }));
+
+      // Create Workbook and Worksheet
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Employees");
+
+      // Generate File Name
+      const deptCode =
+        departments.find((d) => d.id === Number(selectedDept))?.code || "DEPT";
+      const fileName = `Employees_${deptCode}_${new Date().toISOString().split("T")[0]}.xlsx`;
+
+      // Download
+      XLSX.writeFile(workbook, fileName);
+    } catch (err) {
+      console.error("Export failed:", err);
+      alert("Failed to export employees.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header & Actions */}
@@ -152,6 +212,19 @@ export function EmpList() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <GovButton
+            variant="outline"
+            className="gap-2"
+            onClick={handleExportExcel}
+            disabled={!selectedDept || exporting || loading}
+          >
+            {exporting ? (
+              <RefreshCw size={16} className="animate-spin" />
+            ) : (
+              <Download size={16} />
+            )}
+            {exporting ? "Exporting..." : "Export List"}
+          </GovButton>
           <GovButton
             variant="outline"
             className="gap-2"
@@ -169,9 +242,9 @@ export function EmpList() {
         </div>
       </div>
 
-      <GovCard className="p-0 overflow-hidden">
+      <GovCard className="p-0 overflow-hidden flex flex-col min-h-[500px]">
         {/* Department Filter Bar */}
-        <div className="p-4 border-b border-gray-200 bg-gray-50 flex flex-wrap items-end justify-between gap-4">
+        <div className="p-4 border-b border-gray-200 bg-gray-50 flex flex-wrap items-end justify-between gap-4 shrink-0">
           <div className="w-full md:w-72">
             <GovSelect
               label="Select Department to view employees"
@@ -206,7 +279,7 @@ export function EmpList() {
               </GovButton>
             </div>
           )}
-          
+
           {/* Conditional Designation Filter */}
           {selectedDept && (
             <div className="w-full md:w-64">
@@ -228,12 +301,12 @@ export function EmpList() {
 
         {/* Employee Table */}
         {!selectedDept ? (
-          <div className="p-12 text-center text-gray-500">
+          <div className="p-12 text-center text-gray-500 flex-1 flex items-center justify-center">
             Please select a department from the dropdown above to view
             employees.
           </div>
         ) : error ? (
-          <div className="p-8 text-center text-danger font-medium flex flex-col items-center gap-3">
+          <div className="p-8 text-center text-danger font-medium flex flex-col items-center justify-center gap-3 flex-1">
             <p>{error}</p>
             <GovButton
               variant="outline"
@@ -246,137 +319,164 @@ export function EmpList() {
           </div>
         ) : (
           <>
-            <GovTable>
-              <GovTableHeader>
-                <GovTableCell isHeader className="w-12 text-center">
-                  <input
-                    type="checkbox"
-                    className="w-4 h-4 text-primary-dark rounded border-gray-300 focus:ring-primary-dark"
-                    checked={
-                      employees.length > 0 &&
-                      selectedEmpCodes.length === employees.length
-                    }
-                    onChange={handleSelectAll}
-                  />
-                </GovTableCell>
-                <GovTableCell isHeader>Emp Code</GovTableCell>
-                <GovTableCell isHeader>Employee Name</GovTableCell>
-                <GovTableCell isHeader>Designation</GovTableCell>
-                <GovTableCell isHeader>Type</GovTableCell>
-                <GovTableCell isHeader className="text-right">
-                  Actions
-                </GovTableCell>
-              </GovTableHeader>
-
-              <tbody className="divide-y divide-gray-100">
-                {loading ? (
-                  [...Array(5)].map((_, i) => (
-                    <GovTableRow key={i} hover={false}>
-                      <GovTableCell colSpan={6} className="h-16">
-                        <div className="animate-pulse flex space-x-4">
-                          <div className="h-4 bg-gray-200 rounded w-full"></div>
-                        </div>
-                      </GovTableCell>
-                    </GovTableRow>
-                  ))
-                ) : employees.length === 0 ? (
-                  <GovTableRow hover={false}>
-                    <GovTableCell
-                      colSpan={6}
-                      className="h-32 text-center text-gray-500"
-                    >
-                      No employees found in this department.
-                    </GovTableCell>
-                  </GovTableRow>
-                ) : (
-                  employees.map((emp) => (
-                    <GovTableRow
-                      key={emp.employee_code}
-                      className={
-                        selectedEmpCodes.includes(emp.employee_code)
-                          ? "bg-blue-50/50"
-                          : ""
+            <div className="flex-1 overflow-x-auto">
+              <GovTable>
+                <GovTableHeader>
+                  <GovTableCell isHeader className="w-12 text-center">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 text-primary-dark rounded border-gray-300 focus:ring-primary-dark cursor-pointer"
+                      checked={
+                        employees.length > 0 &&
+                        selectedEmpCodes.length === employees.length
                       }
-                    >
-                      <GovTableCell className="text-center">
-                        <input
-                          type="checkbox"
-                          className="w-4 h-4 text-primary-dark rounded border-gray-300 focus:ring-primary-dark cursor-pointer"
-                          checked={selectedEmpCodes.includes(emp.employee_code)}
-                          onChange={() => handleSelectOne(emp.employee_code)}
-                        />
-                      </GovTableCell>
-                      <GovTableCell className="font-mono font-bold text-gray-700">
-                        {emp.employee_code}
-                      </GovTableCell>
-                      <GovTableCell>
-                        <div className="flex flex-col">
-                          <span className="font-semibold text-gray-900">
-                            {emp.first_name} {emp.last_name}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {emp.email}
-                          </span>
+                      onChange={handleSelectAll}
+                    />
+                  </GovTableCell>
+                  <GovTableCell isHeader className="w-16 text-center">
+                    S.No.
+                  </GovTableCell>
+                  <GovTableCell isHeader>Emp Code</GovTableCell>
+                  <GovTableCell isHeader>Employee Name</GovTableCell>
+                  <GovTableCell isHeader>Designation</GovTableCell>
+                  <GovTableCell isHeader>Type</GovTableCell>
+                  <GovTableCell isHeader className="text-right">
+                    Actions
+                  </GovTableCell>
+                </GovTableHeader>
+
+                <tbody className="divide-y divide-gray-100">
+                  {loading ? (
+                    <GovTableRow hover={false}>
+                      <GovTableCell colSpan={7} className="h-32">
+                        <div className="flex justify-center items-center h-full">
+                          <RefreshCw
+                            className="animate-spin text-gray-400"
+                            size={24}
+                          />
                         </div>
                       </GovTableCell>
-                      <GovTableCell>
-                        <GovBadge variant="neutral">
-                          {emp.designation_name}
-                        </GovBadge>
-                      </GovTableCell>
-                      <GovTableCell>
-                        <span className="text-xs uppercase tracking-wider font-semibold text-gray-500">
-                          {emp.employee_type}
-                        </span>
-                      </GovTableCell>
-                      <GovTableCell className="text-right">
-                        <GovButton
-                          variant="outline"
-                          size="sm"
-                          className="gap-2 text-xs"
-                          onClick={() => {
-                            setActiveEmpCode(emp.employee_code);
-                            setIsDetailModalOpen(true);
-                          }}
-                        >
-                          <Eye size={14} /> View
-                        </GovButton>
+                    </GovTableRow>
+                  ) : employees.length === 0 ? (
+                    <GovTableRow hover={false}>
+                      <GovTableCell
+                        colSpan={7}
+                        className="h-32 text-center text-gray-500"
+                      >
+                        No employees found in this department.
                       </GovTableCell>
                     </GovTableRow>
-                  ))
-                )}
-              </tbody>
-            </GovTable>
+                  ) : (
+                    employees.map((emp, index) => {
+                      const serialNumber = (page - 1) * pageSize + index + 1;
+                      return (
+                        <GovTableRow
+                          key={emp.employee_code}
+                          className={
+                            selectedEmpCodes.includes(emp.employee_code)
+                              ? "bg-blue-50/50"
+                              : ""
+                          }
+                        >
+                          <GovTableCell className="text-center">
+                            <input
+                              type="checkbox"
+                              className="w-4 h-4 text-primary-dark rounded border-gray-300 focus:ring-primary-dark cursor-pointer"
+                              checked={selectedEmpCodes.includes(
+                                emp.employee_code,
+                              )}
+                              onChange={() =>
+                                handleSelectOne(emp.employee_code)
+                              }
+                            />
+                          </GovTableCell>
+                          <GovTableCell className="text-center text-gray-500 text-sm">
+                            {serialNumber}
+                          </GovTableCell>
+                          <GovTableCell className="font-mono font-bold text-gray-700">
+                            {emp.employee_code}
+                          </GovTableCell>
+                          <GovTableCell>
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-gray-900">
+                                {emp.first_name} {emp.last_name}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {emp.email}
+                              </span>
+                            </div>
+                          </GovTableCell>
+                          <GovTableCell>
+                            <GovBadge variant="neutral">
+                              {emp.designation_name}
+                            </GovBadge>
+                          </GovTableCell>
+                          <GovTableCell>
+                            <span className="text-xs uppercase tracking-wider font-semibold text-gray-500">
+                              {emp.employee_type}
+                            </span>
+                          </GovTableCell>
+                          <GovTableCell className="text-right">
+                            <GovButton
+                              variant="outline"
+                              size="sm"
+                              className="gap-2 text-xs"
+                              onClick={() => {
+                                setActiveEmpCode(emp.employee_code);
+                                setIsDetailModalOpen(true);
+                              }}
+                            >
+                              <Eye size={14} /> View
+                            </GovButton>
+                          </GovTableCell>
+                        </GovTableRow>
+                      );
+                    })
+                  )}
+                </tbody>
+              </GovTable>
+            </div>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
-              <span className="text-sm text-gray-600">
-                Showing page{" "}
-                <span className="font-semibold text-gray-900">{page}</span> of{" "}
-                {Math.ceil(totalCount / pageSize) || 1}
-                <span className="ml-2">({totalCount} records)</span>
-              </span>
-              <div className="flex gap-2">
-                <GovButton
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => p - 1)}
-                  disabled={!hasPrev || loading}
-                  className="gap-1"
-                >
-                  <ChevronLeft size={16} /> Prev
-                </GovButton>
-                <GovButton
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => p + 1)}
-                  disabled={!hasNext || loading}
-                  className="gap-1"
-                >
-                  Next <ChevronRight size={16} />
-                </GovButton>
+            {!loading && employees.length > 0 && (
+              <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50 shrink-0">
+                <span className="text-sm text-gray-600">
+                  Showing{" "}
+                  <span className="font-semibold text-gray-900">
+                    {Math.min((page - 1) * pageSize + 1, totalCount)}
+                  </span>{" "}
+                  to{" "}
+                  <span className="font-semibold text-gray-900">
+                    {Math.min(page * pageSize, totalCount)}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-semibold text-gray-900">
+                    {totalCount}
+                  </span>{" "}
+                  records
+                </span>
+                <div className="flex gap-2">
+                  <GovButton
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={!hasPrev || loading}
+                    className="gap-1"
+                  >
+                    <ChevronLeft size={16} /> Prev
+                  </GovButton>
+                  <GovButton
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => p + 1)}
+                    disabled={!hasNext || loading}
+                    className="gap-1"
+                  >
+                    Next <ChevronRight size={16} />
+                  </GovButton>
+                </div>
               </div>
-            </div>
+            )}
           </>
         )}
       </GovCard>

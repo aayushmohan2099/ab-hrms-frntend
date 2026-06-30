@@ -113,10 +113,10 @@ export function RegisterDepartment({ onSuccess, onCancel }) {
         />
         <GovInput
           id="description"
-          label="Description"
+          label="Address"
           value={formData.description}
           onChange={handleChange}
-          placeholder="Optional department description"
+          placeholder="Please specify Department Address to appear on Salary Slip"
         />
         <div className="space-y-2">
           <GovInput

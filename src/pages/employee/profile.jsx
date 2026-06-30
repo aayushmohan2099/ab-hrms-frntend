@@ -75,6 +75,7 @@ export function EmployeeProfile() {
       "last_name",
       "phone_number",
       "gender",
+      "caste_category",
       "pan_number",
       "uan_number",
       "bank_name",
@@ -243,6 +244,20 @@ export function EmployeeProfile() {
                 label="Phone Number"
                 value={formData.phone_number}
                 onChange={handleChange}
+              />
+              <GovSelect
+                id="caste_category"
+                label="Social Category"
+                value={formData.caste_category ?? ""}
+                onChange={handleChange}
+                options={[
+                  { value: "", label: "-- Select Category --" },
+                  { value: "GEN", label: "General" },
+                  { value: "SC", label: "Scheduled Caste" },
+                  { value: "ST", label: "Scheduled Tribe" },
+                  { value: "OBC", label: "Other Backward Class" },
+                  { value: "EWS", label: "Economically Weaker Section" },
+                ]}
               />
               <GovSelect
                 id="gender"

@@ -5,13 +5,23 @@ import { SalSlipService } from "../../api/SalSlipService";
 import { GovCard } from "../../components/ui/GovCard";
 import { GovButton } from "../../components/ui/GovButton";
 import { GovBadge } from "../../components/ui/GovBadge";
+import { GovModal } from "../../components/ui/GovModal";
+import { GovSeparator } from "../../components/ui/GovSeparator";
 import {
   GovTable,
   GovTableHeader,
   GovTableRow,
   GovTableCell,
 } from "../../components/ui/GovTable";
-import { FileText, ChevronLeft, ChevronRight, Download } from "lucide-react";
+import {
+  FileText,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Eye,
+  Loader2,
+} from "lucide-react";
+import HeaderImage from "../../assets/ABSalHeader.png";
 
 export function ManagerSalarySlips() {
   const { user } = useAuth();
@@ -25,6 +35,11 @@ export function ManagerSalarySlips() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const pageSize = 15;
+
+  // Preview state
+  const [previewSlip, setPreviewSlip] = useState(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [fetchingPreview, setFetchingPreview] = useState(false);
 
   const monthNames = [
     "January",
@@ -85,6 +100,30 @@ export function ManagerSalarySlips() {
       );
     } catch (err) {
       alert("Failed to download the salary slip.");
+    }
+  };
+
+  const handlePreview = async (slip) => {
+    setShowPreview(true);
+    setFetchingPreview(true);
+    setPreviewSlip(null);
+    try {
+      // Fetch full details of the slip for preview
+      const data = await SalSlipService.generateSalarySlip(
+        slip.employee_code,
+        slip.slip_year,
+        slip.slip_month,
+      );
+      // Attach month and year for rendering
+      data.slip_month = slip.slip_month;
+      data.slip_year = slip.slip_year;
+      setPreviewSlip(data);
+    } catch (err) {
+      console.error("Failed to fetch preview:", err);
+      alert("Failed to load salary slip preview.");
+      setShowPreview(false);
+    } finally {
+      setFetchingPreview(false);
     }
   };
 
@@ -165,7 +204,12 @@ export function ManagerSalarySlips() {
                       {monthNames[slip.slip_month - 1]} {slip.slip_year}
                     </GovTableCell>
                     <GovTableCell className="font-semibold text-green-700">
-                      ₹{parseFloat(slip.net_pay).toLocaleString("en-IN")}
+                      {/* Note: In list view, backend might still send raw float. Using format here if needed */}
+                      ₹
+                      {parseFloat(slip.net_pay || 0).toLocaleString("en-IN", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                     </GovTableCell>
                     <GovTableCell>
                       <GovBadge variant={getStatusVariant(slip.status)}>
@@ -181,14 +225,24 @@ export function ManagerSalarySlips() {
                         : "N/A"}
                     </GovTableCell>
                     <GovTableCell className="text-right">
-                      <GovButton
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
-                        onClick={() => handleDownload(slip)}
-                      >
-                        <Download size={14} /> PDF
-                      </GovButton>
+                      <div className="flex justify-end gap-2">
+                        <GovButton
+                          variant="outline"
+                          size="sm"
+                          className="gap-2"
+                          onClick={() => handlePreview(slip)}
+                        >
+                          <Eye size={14} /> Preview
+                        </GovButton>
+                        <GovButton
+                          variant="outline"
+                          size="sm"
+                          className="gap-2"
+                          onClick={() => handleDownload(slip)}
+                        >
+                          <Download size={14} /> PDF
+                        </GovButton>
+                      </div>
                     </GovTableCell>
                   </GovTableRow>
                 ))}
@@ -229,6 +283,199 @@ export function ManagerSalarySlips() {
           </div>
         )}
       </GovCard>
+
+      {/* Structured Salary Slip Preview Modal */}
+      <GovModal
+        isOpen={showPreview}
+        onClose={() => setShowPreview(false)}
+        title="Salary Slip Preview"
+        className="max-w-5xl"
+      >
+        {fetchingPreview ? (
+          <div className="flex flex-col items-center justify-center p-16">
+            <Loader2
+              className="animate-spin text-primary-dark mb-4"
+              size={40}
+            />
+            <p className="text-gray-500 font-medium">Generating Preview...</p>
+          </div>
+        ) : previewSlip ? (
+          <div className="bg-white p-2 sm:p-6 rounded-md">
+            <div className="w-full h-24 mb-6 flex items-center justify-center">
+              <img
+                src={HeaderImage}
+                alt="A B Enterprise Header"
+                className="w-full max-w-[535px] h-auto object-contain pointer-events-none select-none"
+                onError={(e) => {
+                  e.target.style.display = "none";
+                  e.target.insertAdjacentHTML(
+                    "afterend",
+                    '<div class="w-full bg-blue-50 border border-blue-100 h-24 mb-6 rounded flex items-center justify-center text-blue-300"><span class="font-semibold text-sm tracking-widest">[ HEADER IMAGE PLACEHOLDER ]</span></div>',
+                  );
+                }}
+              />
+            </div>
+
+            <h3 className="text-xl sm:text-2xl font-bold text-center text-[#1e3a8a] uppercase tracking-wider mb-8">
+              WAGE SLIP FOR THE MONTH OF{" "}
+              {monthNames[previewSlip.slip_month - 1].toUpperCase()}{" "}
+              {previewSlip.slip_year}
+            </h3>
+
+            {/* Information Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm text-gray-800 mb-8 px-2 sm:px-6">
+              <div className="grid grid-cols-[110px_10px_1fr] gap-y-2">
+                <span className="font-bold">Company Name</span>
+                <span>:</span>
+                <span className="font-bold">A B ENTERPRISE</span>
+                <span className="font-bold">Employee Name</span>
+                <span>:</span>
+                <span>{previewSlip.employee_name_snapshot}</span>
+                <span className="font-bold">Designation</span>
+                <span>:</span>
+                <span>{previewSlip.designation_snapshot}</span>
+                <span className="font-bold">UAN No.</span>
+                <span>:</span>
+                <span>{previewSlip.uan_snapshot || "NA"}</span>
+                <span className="font-bold">Date Generated</span>
+                <span>:</span>
+                <span>
+                  {new Date().toLocaleDateString("en-GB").replace(/\//g, ".")}
+                </span>
+              </div>
+              <div className="grid grid-cols-[110px_10px_1fr] gap-y-2">
+                <span className="font-bold">Work Place</span>
+                <span>:</span>
+                <span>{previewSlip.department_snapshot}</span>
+                <span className="font-bold">Address</span>
+                <span>:</span>
+                <span>{previewSlip.department_description}</span>
+                <span className="font-bold">Theme</span>
+                <span>:</span>
+                <span>{previewSlip.employee_theme}</span>
+                <span className="font-bold">ESIC No.</span>
+                <span>:</span>
+                <span>NA</span>
+              </div>
+            </div>
+
+            {/* Structured Wage Table */}
+            <div className="px-2 sm:px-6 mb-8 overflow-x-auto">
+              <table className="w-full text-sm border-collapse border border-slate-300">
+                <thead className="bg-slate-100">
+                  <tr>
+                    <th className="border border-slate-300 p-3 text-left">
+                      Days
+                    </th>
+                    <th className="border border-slate-300 p-3 text-right">
+                      Count
+                    </th>
+                    <th className="border border-slate-300 p-3 text-left">
+                      Allowance
+                    </th>
+                    <th className="border border-slate-300 p-3 text-right">
+                      Gross
+                    </th>
+                    <th className="border border-slate-300 p-3 text-left">
+                      Deduction
+                    </th>
+                    <th className="border border-slate-300 p-3 text-right">
+                      Amount
+                    </th>
+                    <th className="border border-slate-300 p-3 text-right">
+                      Net Pay
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border border-slate-300 p-3">Prs. Days</td>
+                    <td className="border border-slate-300 p-3 text-right">
+                      {previewSlip.days_present}
+                    </td>
+                    <td className="border border-slate-300 p-3">Basic</td>
+                    <td className="border border-slate-300 p-3 text-right">
+                      {previewSlip.monthly_honorarium}
+                    </td>
+                    <td className="border border-slate-300 p-3">
+                      P. Fund (12%)
+                    </td>
+                    <td className="border border-slate-300 p-3 text-right">
+                      {previewSlip.epf_amount}
+                    </td>
+                    <td
+                      className="border border-slate-300 p-3 text-right"
+                      rowSpan="3"
+                    ></td>
+                  </tr>
+                  <tr>
+                    <td className="border border-slate-300 p-3"></td>
+                    <td className="border border-slate-300 p-3 text-right"></td>
+                    <td className="border border-slate-300 p-3"></td>
+                    <td className="border border-slate-300 p-3 text-right"></td>
+                    <td className="border border-slate-300 p-3">
+                      ESIC (0.75%)
+                    </td>
+                    <td className="border border-slate-300 p-3 text-right">
+                      {previewSlip.esic_amount}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="border border-slate-300 p-3"></td>
+                    <td className="border border-slate-300 p-3 text-right"></td>
+                    <td className="border border-slate-300 p-3"></td>
+                    <td className="border border-slate-300 p-3 text-right"></td>
+                    <td className="border border-slate-300 p-3">TDS (10%)</td>
+                    <td className="border border-slate-300 p-3 text-right">
+                      {previewSlip.tds_amount}
+                    </td>
+                  </tr>
+                  <tr className="bg-slate-50 font-bold">
+                    <td className="border border-slate-300 p-3 py-4">
+                      Total Days
+                    </td>
+                    <td className="border border-slate-300 p-3 py-4 text-right">
+                      {previewSlip.total_working_days}
+                    </td>
+                    <td className="border border-slate-300 p-3 py-4">
+                      Total Earnings
+                    </td>
+                    <td className="border border-slate-300 p-3 py-4 text-right">
+                      {previewSlip.gross_pay}
+                    </td>
+                    <td className="border border-slate-300 p-3 py-4">
+                      Total Ded.
+                    </td>
+                    <td className="border border-slate-300 p-3 py-4 text-right">
+                      {previewSlip.total_deductions}
+                    </td>
+                    <td className="border border-slate-300 p-3 py-4 text-right text-green-700 text-base">
+                      {previewSlip.net_pay}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Net Pay in Words */}
+            <div className="px-2 sm:px-6 mb-8">
+              <div className="bg-green-50 border border-green-200 rounded p-4 text-sm text-green-900">
+                <span className="font-bold">Net Pay in words:</span>{" "}
+                {previewSlip.net_pay_words}
+              </div>
+            </div>
+
+            <p className="text-xs text-center text-gray-500 italic mb-4">
+              This is a system-generated salary slip and does not require a
+              signature.
+            </p>
+          </div>
+        ) : (
+          <div className="p-8 text-center text-gray-500">
+            No preview available.
+          </div>
+        )}
+      </GovModal>
     </div>
   );
 }

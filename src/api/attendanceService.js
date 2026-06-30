@@ -114,9 +114,11 @@ export const attendanceService = {
    * 4) Bulk Upload Attendance via CSV
    * @param {File} file - The CSV file containing bulk attendance data.
    */
-  bulkUploadAttendance: async (file) => {
+  bulkUploadAttendance: async (file, month, year) => {
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("month", month);
+    formData.append("year", year);
 
     const response = await api.post("/attendance/bulk-upload/", formData, {
       headers: {
@@ -130,20 +132,16 @@ export const attendanceService = {
    * 4.1) Download Bulk Upload CSV Format Template
    * Triggers a browser download of the expected CSV template.
    */
-  downloadBulkUploadTemplate: () => {
-    // Construct the full URL for the template download
-    const url = `${api.defaults.baseURL}/attendance/bulk-upload/?download_format=true`;
-
-    // Create a temporary link element to trigger the download
+  downloadBulkUploadTemplate: (month, year) => {
+    const url = `${api.defaults.baseURL}/attendance/bulk-upload/?download_format=true&month=${month}&year=${year}`;
     const link = document.createElement("a");
     link.href = url;
-    // We attach the current auth token so the request succeeds if the backend requires authentication for downloads
+
     const token = localStorage.getItem("access_token");
     if (token) {
-      // A safer approach using Blob (which automatically uses Axios interceptors):
       return api
         .get("/attendance/bulk-upload/", {
-          params: { download_format: "true" },
+          params: { download_format: "true", month, year },
           responseType: "blob",
         })
         .then((response) => {
@@ -152,7 +150,7 @@ export const attendanceService = {
           downloadLink.href = blobUrl;
           downloadLink.setAttribute(
             "download",
-            "attendance_bulk_upload_template.csv",
+            `attendance_template_${year}_${String(month).padStart(2, "0")}.csv`,
           );
           document.body.appendChild(downloadLink);
           downloadLink.click();

@@ -7,15 +7,8 @@ import { attendanceService } from "../../api/attendanceService";
 import { GovCard } from "../../components/ui/GovCard";
 import { GovButton } from "../../components/ui/GovButton";
 import { GovSelect } from "../../components/ui/GovSelect";
-import {
-  GovTable,
-  GovTableHeader,
-  GovTableRow,
-  GovTableCell,
-} from "../../components/ui/GovTable";
-import { GovSeparator } from "../../components/ui/GovSeparator";
 import { Download, Search, AlertCircle } from "lucide-react";
-import FooterImage from "../../assets/AB_FOOTER.png";
+import HeaderImage from "../../assets/ABSalHeader.png";
 
 export function SalarySlip() {
   const { user } = useAuth();
@@ -89,8 +82,6 @@ export function SalarySlip() {
     setSlipData(null);
 
     try {
-      // NOTE: Ensure your Django backend is updated to return the serialized slip
-      // fields in this JSON response so the table below can populate correctly.
       const data = await SalSlipService.generateSalarySlip(
         employeeCode,
         year,
@@ -201,173 +192,181 @@ export function SalarySlip() {
                 </GovButton>
               </div>
 
-              {/* Slip Content mapped to Python ReportLab Template */}
-              <div className="mt-12 mb-6">
-                <h3 className="text-xl font-bold text-center text-gray-900 uppercase tracking-wider mb-8">
-                  Wage Slip For the month of {monthName}-{year}
+              {/* Structured Slip Content matching the PDF output */}
+              <div className="bg-white p-2 sm:p-6 rounded-md mt-10">
+                {/* Header Image replacing the title/placeholder */}
+                <div className="mb-6 flex justify-center w-full">
+                  <img
+                    src={HeaderImage}
+                    alt="A B Enterprise Header"
+                    className="w-full max-w-[535px] h-auto object-contain pointer-events-none select-none"
+                    onError={(e) => {
+                      e.target.style.display = "none";
+                      e.target.insertAdjacentHTML(
+                        "afterend",
+                        '<div class="w-full bg-blue-50 border border-blue-100 h-24 mb-6 rounded flex items-center justify-center text-blue-300"><span class="font-semibold text-sm tracking-widest">[ HEADER IMAGE PLACEHOLDER ]</span></div>',
+                      );
+                    }}
+                  />
+                </div>
+
+                <h3 className="text-xl sm:text-2xl font-bold text-center text-[#1e3a8a] uppercase tracking-wider mb-8">
+                  WAGE SLIP FOR THE MONTH OF {monthName.toUpperCase()} {year}
                 </h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm text-gray-800 mb-6 px-4">
-                  <div className="grid grid-cols-[120px_10px_1fr] gap-2">
-                    <span className="font-semibold">Company Name</span>
+                {/* Information Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm text-gray-800 mb-8 px-2 sm:px-6">
+                  <div className="grid grid-cols-[110px_10px_1fr] gap-y-2">
+                    <span className="font-bold">Company Name</span>
                     <span>:</span>
-                    <span>A B ENTERPRISE</span>
-
-                    <span className="font-semibold">Employee Name</span>
+                    <span className="font-bold">A B ENTERPRISE</span>
+                    <span className="font-bold">Employee Name</span>
                     <span>:</span>
-                    <span>
-                      {slipData.employee_name_snapshot || user?.first_name}
-                    </span>
-
-                    <span className="font-semibold">UAN No.</span>
+                    <span>{slipData.employee_name_snapshot}</span>
+                    <span className="font-bold">Designation</span>
+                    <span>:</span>
+                    <span>{slipData.designation_snapshot}</span>
+                    <span className="font-bold">UAN No.</span>
                     <span>:</span>
                     <span>{slipData.uan_snapshot || "NA"}</span>
-
-                    <span className="font-semibold">ESIC No.</span>
+                    <span className="font-bold">Date Generated</span>
+                    <span>:</span>
+                    <span>
+                      {new Date()
+                        .toLocaleDateString("en-GB")
+                        .replace(/\//g, ".")}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-[110px_10px_1fr] gap-y-2">
+                    <span className="font-bold">Work Place</span>
+                    <span>:</span>
+                    <span>{slipData.department_snapshot}</span>
+                    <span className="font-bold">Address</span>
+                    <span>:</span>
+                    <span>{slipData.department_description || "NA"}</span>
+                    <span className="font-bold">Theme</span>
+                    <span>:</span>
+                    <span>{slipData.employee_theme || "NA"}</span>
+                    <span className="font-bold">ESIC No.</span>
                     <span>:</span>
                     <span>NA</span>
                   </div>
-                  <div className="grid grid-cols-[120px_10px_1fr] gap-2">
-                    <span className="font-semibold">Work Place</span>
-                    <span>:</span>
-                    <span>{slipData.department_snapshot || "NA"}</span>
+                </div>
 
-                    <span className="font-semibold">Designation</span>
-                    <span>:</span>
-                    <span>{slipData.designation_snapshot || "NA"}</span>
+                {/* Structured Wage Table */}
+                <div className="px-2 sm:px-6 mb-8 overflow-x-auto">
+                  <table className="w-full text-sm border-collapse border border-slate-300">
+                    <thead className="bg-slate-100">
+                      <tr>
+                        <th className="border border-slate-300 p-3 text-left">
+                          Days
+                        </th>
+                        <th className="border border-slate-300 p-3 text-right">
+                          Count
+                        </th>
+                        <th className="border border-slate-300 p-3 text-left">
+                          Allowance
+                        </th>
+                        <th className="border border-slate-300 p-3 text-right">
+                          Gross
+                        </th>
+                        <th className="border border-slate-300 p-3 text-left">
+                          Deduction
+                        </th>
+                        <th className="border border-slate-300 p-3 text-right">
+                          Amount
+                        </th>
+                        <th className="border border-slate-300 p-3 text-right">
+                          Net Pay
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="border border-slate-300 p-3">
+                          Prs. Days
+                        </td>
+                        <td className="border border-slate-300 p-3 text-right">
+                          {slipData.days_present}
+                        </td>
+                        <td className="border border-slate-300 p-3">Basic</td>
+                        <td className="border border-slate-300 p-3 text-right">
+                          {slipData.monthly_honorarium}
+                        </td>
+                        <td className="border border-slate-300 p-3">
+                          P. Fund (12%)
+                        </td>
+                        <td className="border border-slate-300 p-3 text-right">
+                          {slipData.epf_amount}
+                        </td>
+                        <td
+                          className="border border-slate-300 p-3 text-right"
+                          rowSpan="3"
+                        ></td>
+                      </tr>
+                      <tr>
+                        <td className="border border-slate-300 p-3"></td>
+                        <td className="border border-slate-300 p-3 text-right"></td>
+                        <td className="border border-slate-300 p-3"></td>
+                        <td className="border border-slate-300 p-3 text-right"></td>
+                        <td className="border border-slate-300 p-3">
+                          ESIC (0.75%)
+                        </td>
+                        <td className="border border-slate-300 p-3 text-right">
+                          {slipData.esic_amount}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="border border-slate-300 p-3"></td>
+                        <td className="border border-slate-300 p-3 text-right"></td>
+                        <td className="border border-slate-300 p-3"></td>
+                        <td className="border border-slate-300 p-3 text-right"></td>
+                        <td className="border border-slate-300 p-3">
+                          TDS (10%)
+                        </td>
+                        <td className="border border-slate-300 p-3 text-right">
+                          {slipData.tds_amount}
+                        </td>
+                      </tr>
+                      <tr className="bg-slate-50 font-bold">
+                        <td className="border border-slate-300 p-3 py-4">
+                          Total Days
+                        </td>
+                        <td className="border border-slate-300 p-3 py-4 text-right">
+                          {slipData.total_working_days}
+                        </td>
+                        <td className="border border-slate-300 p-3 py-4">
+                          Total Earnings
+                        </td>
+                        <td className="border border-slate-300 p-3 py-4 text-right">
+                          {slipData.gross_pay}
+                        </td>
+                        <td className="border border-slate-300 p-3 py-4">
+                          Total Ded.
+                        </td>
+                        <td className="border border-slate-300 p-3 py-4 text-right">
+                          {slipData.total_deductions}
+                        </td>
+                        <td className="border border-slate-300 p-3 py-4 text-right text-green-700 text-base">
+                          {slipData.net_pay}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
 
-                    <span className="font-semibold">Date</span>
-                    <span>:</span>
-                    <span>{new Date().toLocaleDateString("en-GB")}</span>
+                {/* Net Pay in Words */}
+                <div className="px-2 sm:px-6 mb-8">
+                  <div className="bg-green-50 border border-green-200 rounded p-4 text-sm text-green-900">
+                    <span className="font-bold">Net Pay in words:</span>{" "}
+                    {slipData.net_pay_words}
                   </div>
                 </div>
 
-                <GovSeparator className="my-6" />
-
-                <GovTable className="border-collapse border border-gray-300">
-                  <GovTableHeader className="bg-gray-50 border-y border-gray-300">
-                    <GovTableCell isHeader className="border-r border-gray-300">
-                      Days
-                    </GovTableCell>
-                    <GovTableCell
-                      isHeader
-                      className="border-r border-gray-300"
-                    ></GovTableCell>
-                    <GovTableCell isHeader className="border-r border-gray-300">
-                      Allowance
-                    </GovTableCell>
-                    <GovTableCell isHeader className="border-r border-gray-300">
-                      Rate
-                    </GovTableCell>
-                    <GovTableCell isHeader className="border-r border-gray-300">
-                      Gross
-                    </GovTableCell>
-                    <GovTableCell isHeader className="border-r border-gray-300">
-                      Deduction
-                    </GovTableCell>
-                    <GovTableCell
-                      isHeader
-                      className="border-r border-gray-300"
-                    ></GovTableCell>
-                    <GovTableCell isHeader>Net Pay</GovTableCell>
-                  </GovTableHeader>
-                  <tbody className="text-gray-800">
-                    <GovTableRow hover={false} className="border-b-0">
-                      <GovTableCell className="font-medium border-r border-gray-300">
-                        Prs. Days
-                      </GovTableCell>
-                      <GovTableCell className="border-r border-gray-300 text-right">
-                        {slipData.days_present || 0}
-                      </GovTableCell>
-                      <GovTableCell className="border-r border-gray-300">
-                        Basic
-                      </GovTableCell>
-                      <GovTableCell className="border-r border-gray-300"></GovTableCell>
-                      <GovTableCell className="border-r border-gray-300 text-right">
-                        {slipData.monthly_honorarium || "0.00"}
-                      </GovTableCell>
-                      <GovTableCell className="border-r border-gray-300">
-                        P. Fund (12%)
-                      </GovTableCell>
-                      <GovTableCell className="border-r border-gray-300 text-right">
-                        {slipData.epf_amount || "0.00"}
-                      </GovTableCell>
-                      <GovTableCell></GovTableCell>
-                    </GovTableRow>
-                    <GovTableRow hover={false} className="border-b-0">
-                      <GovTableCell className="border-r border-gray-300"></GovTableCell>
-                      <GovTableCell className="border-r border-gray-300"></GovTableCell>
-                      <GovTableCell className="border-r border-gray-300"></GovTableCell>
-                      <GovTableCell className="border-r border-gray-300"></GovTableCell>
-                      <GovTableCell className="border-r border-gray-300"></GovTableCell>
-                      <GovTableCell className="border-r border-gray-300">
-                        ESIC (0.75%)
-                      </GovTableCell>
-                      <GovTableCell className="border-r border-gray-300 text-right">
-                        {slipData.esic_amount || "0.00"}
-                      </GovTableCell>
-                      <GovTableCell></GovTableCell>
-                    </GovTableRow>
-                    <GovTableRow
-                      hover={false}
-                      className="border-b border-gray-300"
-                    >
-                      <GovTableCell className="border-r border-gray-300"></GovTableCell>
-                      <GovTableCell className="border-r border-gray-300"></GovTableCell>
-                      <GovTableCell className="border-r border-gray-300"></GovTableCell>
-                      <GovTableCell className="border-r border-gray-300"></GovTableCell>
-                      <GovTableCell className="border-r border-gray-300"></GovTableCell>
-                      <GovTableCell className="border-r border-gray-300">
-                        TDS (10%)
-                      </GovTableCell>
-                      <GovTableCell className="border-r border-gray-300 text-right">
-                        {slipData.tds_amount || "0.00"}
-                      </GovTableCell>
-                      <GovTableCell></GovTableCell>
-                    </GovTableRow>
-                    <GovTableRow
-                      hover={false}
-                      className="bg-gray-50 font-bold border-b border-gray-300"
-                    >
-                      <GovTableCell className="border-r border-gray-300">
-                        Total Days
-                      </GovTableCell>
-                      <GovTableCell className="border-r border-gray-300 text-right">
-                        {slipData.total_working_days || 0}
-                      </GovTableCell>
-                      <GovTableCell className="border-r border-gray-300">
-                        Total Earnings
-                      </GovTableCell>
-                      <GovTableCell className="border-r border-gray-300"></GovTableCell>
-                      <GovTableCell className="border-r border-gray-300 text-right">
-                        {slipData.gross_pay || "0.00"}
-                      </GovTableCell>
-                      <GovTableCell className="border-r border-gray-300">
-                        Total Ded.
-                      </GovTableCell>
-                      <GovTableCell className="border-r border-gray-300 text-right">
-                        {slipData.total_deductions || "0.00"}
-                      </GovTableCell>
-                      <GovTableCell className="text-right">
-                        {slipData.net_pay || "0.00"}
-                      </GovTableCell>
-                    </GovTableRow>
-                  </tbody>
-                </GovTable>
-
-                <p className="mt-8 text-sm text-center text-gray-500 italic">
+                <p className="text-xs text-center text-gray-500 italic mb-4">
                   This is a system-generated salary slip and does not require a
                   signature.
                 </p>
-
-                {/* Added Footer Image */}
-                <div className="mt-6 flex justify-center w-full">
-                  <img
-                    src={FooterImage}
-                    alt="A B Enterprise Footer"
-                    className="w-full h-auto object-contain pointer-events-none select-none"
-                  />
-                </div>
               </div>
             </GovCard>
           )}

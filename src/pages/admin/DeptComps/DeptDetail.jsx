@@ -151,7 +151,7 @@ export function DeptDetail({ deptId, onClose, onRefresh }) {
           />
           <GovInput
             id="description"
-            label="Description"
+            label="Address"
             value={formData.description}
             onChange={handleChange}
           />
