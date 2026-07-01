@@ -109,14 +109,21 @@ export function AttenList() {
     }
 
     // 1. Format the data for Excel
-    const exportData = attendanceData.map((emp, index) => ({
-      "S.No.": index + 1,
-      "Employee Code": emp.employee_code,
-      "Employee Name": emp.first_name + " " + emp.last_name,
-      Designation: emp.designation_name,
-      Theme: emp.theme || "Not Set",
-      "Present Days / Working Days": emp.present_summary,
-    }));
+    const exportData = attendanceData.map((emp, index) => {
+      const [presentDays, workingDays] = (emp.present_summary || "0/0").split(
+        "/",
+      );
+
+      return {
+        "S.No.": index + 1,
+        "Employee Code": emp.employee_code,
+        "Employee Name": `${emp.first_name} ${emp.last_name}`,
+        Designation: emp.designation_name,
+        Theme: emp.theme || "Not Set",
+        "Present Days": presentDays,
+        "Working Days": workingDays,
+      };
+    });
 
     // 2. Create Workbook and Worksheet
     const worksheet = XLSX.utils.json_to_sheet(exportData);

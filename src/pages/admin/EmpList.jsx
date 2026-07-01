@@ -171,12 +171,17 @@ export function EmpList() {
         "Employee Code": emp.employee_code,
         "First Name": emp.first_name,
         "Last Name": emp.last_name,
+        "Gender": emp.gender || "N/A",
+        "Caste": emp.caste_category || "N/A",
         Email: emp.email || "N/A",
         Phone: emp.phone_number || "N/A",
+        "Date of Birth": emp.date_of_birth || "N/A",
         Department: emp.department_name,
         Designation: emp.designation_name,
+        Theme: emp.theme || "Not Set",
         "Employment Type": emp.employee_type,
         "Date of Joining": emp.date_of_joining || "N/A",
+        "Monthly Honorarium": emp.monthly_honorarium || "N/A",
       }));
 
       // Create Workbook and Worksheet

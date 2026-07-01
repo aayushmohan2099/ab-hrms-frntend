@@ -284,7 +284,7 @@ export function SalarySlip() {
                     <tbody>
                       <tr>
                         <td className="border border-slate-300 p-3">
-                          Prs. Days
+                          Present Days
                         </td>
                         <td className="border border-slate-300 p-3 text-right">
                           {slipData.days_present}

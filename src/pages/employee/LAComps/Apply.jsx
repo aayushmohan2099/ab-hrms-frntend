@@ -98,7 +98,6 @@ export function ApplyLeave() {
       { value: "SICK", label: "Sick Leave (SL)" },
       { value: "CASUAL", label: "Casual Leave (CL)" },
       { value: "LWP", label: "Leave Without Pay (LWP)" },
-      { value: "ESL", label: "Extraordinary Sick Leave (ESL)" },
       { value: "MATERNITY", label: "Maternity Leave (ML)" },
     ];
 
@@ -159,8 +158,8 @@ export function ApplyLeave() {
             Loading balances...
           </div>
         ) : leaveBalances ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-center">
-            <div className="bg-white p-3 rounded shadow-sm border border-gray-100">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 text-center">
+            <div className="bg-white p-3 rounded shadow-sm border border-gray-100"> 
               <span className="block text-xs font-bold text-gray-500 mb-1">
                 TOTAL
               </span>
@@ -190,14 +189,6 @@ export function ApplyLeave() {
               </span>
               <span className="text-lg font-black text-yellow-600">
                 {leaveBalances["CASUAL"]}
-              </span>
-            </div>
-            <div className="bg-white p-3 rounded shadow-sm border border-gray-100">
-              <span className="block text-xs font-bold text-gray-500 mb-1">
-                ESL
-              </span>
-              <span className="text-lg font-black text-purple-700">
-                {leaveBalances["ESL"]}
               </span>
             </div>
             <div className="bg-white p-3 rounded shadow-sm border border-gray-100">

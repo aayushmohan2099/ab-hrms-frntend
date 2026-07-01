@@ -176,7 +176,7 @@ export function Footer() {
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 text-sm text-gray-600">
+              {/* <div className="flex items-start gap-3 text-sm text-gray-600">
                 <MapPin
                   size={18}
                   className="text-primary-light shrink-0 mt-0.5"
@@ -191,7 +191,7 @@ export function Footer() {
                   <br />
                   Lucknow - 226021
                 </div>
-              </div>
+              </div> */}
 
               <div className="flex items-center gap-3 text-sm text-gray-600">
                 <Mail size={18} className="text-primary-light shrink-0" />

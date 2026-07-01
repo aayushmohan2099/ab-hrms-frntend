@@ -27,7 +27,7 @@ export function CreateEmp() {
     last_name: "",
     email: "",
     phone_number: "",
-    employee_type: "PERMANENT",
+    employee_type: "CONTRACT",
     department: "",
     designation: "",
     gender: "M",
@@ -232,7 +232,7 @@ export function CreateEmp() {
                 options={[
                   { value: "PERMANENT", label: "Permanent" },
                   { value: "CONTRACT", label: "Contract" },
-                  { value: "INTERN", label: "Intern" },
+                  { value: "OUTSOURCED", label: "Out-sourced" },
                 ]}
               />
               <GovInput
