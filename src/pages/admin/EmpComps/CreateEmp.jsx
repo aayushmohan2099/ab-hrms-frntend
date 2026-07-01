@@ -31,6 +31,7 @@ export function CreateEmp() {
     department: "",
     designation: "",
     gender: "M",
+    caste_category: "",
     date_of_joining: "",
     date_of_birth: "",
     monthly_honorarium: "",
@@ -275,6 +276,20 @@ export function CreateEmp() {
                   { value: "M", label: "Male" },
                   { value: "F", label: "Female" },
                   { value: "O", label: "Other" },
+                ]}
+              />
+              <GovSelect
+                id="caste_category"
+                label="Social Category"
+                value={formData.caste_category ?? ""}
+                onChange={handleChange}
+                options={[
+                  { value: "", label: "-- Select Category --" },
+                  { value: "GEN", label: "General" },
+                  { value: "SC", label: "Scheduled Caste" },
+                  { value: "ST", label: "Scheduled Tribe" },
+                  { value: "OBC", label: "Other Backward Class" },
+                  { value: "EWS", label: "Economically Weaker Section" },
                 ]}
               />
               <GovInput

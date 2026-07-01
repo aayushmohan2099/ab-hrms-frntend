@@ -219,6 +219,9 @@ export function BulkUploadAtten() {
                 <strong className="text-gray-900">A</strong> : Absent
               </li>
               <li>
+                <strong className="text-gray-900">H</strong> : Holiday
+              </li>
+              <li>
                 <strong className="text-gray-900">EL</strong> : Earned Leave
               </li>
               <li>
@@ -229,9 +232,6 @@ export function BulkUploadAtten() {
               </li>
               <li>
                 <strong className="text-gray-900">LWP</strong> : Leave W/O Pay
-              </li>
-              <li>
-                <strong className="text-gray-900">ESL</strong> : Ext. Sick Leave
               </li>
             </ul>
 

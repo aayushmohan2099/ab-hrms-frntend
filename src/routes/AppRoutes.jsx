@@ -24,6 +24,7 @@ import { AdminSalarySlips } from "../pages/admin/SalarySlip";
 import { NewsBoard } from "../pages/admin/NewsBoard";
 import { TDSFormList } from "../pages/admin/TDSFormList";
 import { UploadTDSForm } from "../pages/admin/TDSFormComps/UploadTDSForm";
+import { ResetPassword } from "../pages/admin/EmpComps/ResetPassword";
 
 // Manager Pages
 import { ManagerDashboard } from "../pages/manager/Dashboard";
@@ -39,6 +40,7 @@ import { EmployeeCalendar as ManagerEmployeeCalendar } from "../pages/manager/At
 import { PayrollList } from "../pages/manager/Payroll/PayrollList";
 import { PayrollDetail } from "../pages/manager/Payroll/PayrollDetail";
 import { ManagerSalarySlips } from "../pages/manager/SalarySlip";
+import { ResetPassword as ManagerResetPassword } from "../pages/manager/EmpComps/ResetPassword";
 
 // Employee Pages
 import { EmployeeDashboard } from "../pages/employee/dashboard";
@@ -107,6 +109,7 @@ export function AppRoutes() {
           <Route path="news-list" element={<NewsBoard />} />
           <Route path="form-16" element={<TDSFormList />} />
           <Route path="form-16/upload" element={<UploadTDSForm />} />
+          <Route path="users/:id/reset-password" element={<ResetPassword />} />
         </Route>
       </Route>
 
@@ -148,6 +151,7 @@ export function AppRoutes() {
           <Route path="payroll" element={<PayrollList />} />
           <Route path="payroll/:runId" element={<PayrollDetail />} />
           <Route path="salary-slips" element={<ManagerSalarySlips />} />
+          <Route path="users/:id/reset-password" element={<ManagerResetPassword />} />
         </Route>
       </Route>
 

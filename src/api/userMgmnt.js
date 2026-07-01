@@ -80,4 +80,15 @@ export const userManagementService = {
     const response = await api.post(`/users/${id}/reset-password/`);
     return response.data;
   },
+
+  /**
+   * 7) Change User Password (With validation of current password).
+   * @param {number|string} id - The ID of the user.
+   * @param {Object} data - Contains { old_password, new_password }.
+   * @returns {Promise<Object>} Success message.
+   */
+  changePassword: async (id, data) => {
+    const response = await api.post(`/users/${id}/change-password/`, data);
+    return response.data;
+  },
 };

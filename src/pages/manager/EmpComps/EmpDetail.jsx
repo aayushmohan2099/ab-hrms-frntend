@@ -11,6 +11,7 @@ export function EmpDetail({ empCode, onClose, onRefresh }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [empId, setEmpId] = useState(null);
 
   const [formData, setFormData] = useState({});
   const [profilePic, setProfilePic] = useState(null);
@@ -25,6 +26,7 @@ export function EmpDetail({ empCode, onClose, onRefresh }) {
           sanitizedData[key] = data[key] === null ? "" : data[key];
         }
         setFormData(sanitizedData);
+        setEmpId(data.user_id);
       } catch (err) {
         setError("Failed to load employee details.");
       } finally {
@@ -56,6 +58,7 @@ export function EmpDetail({ empCode, onClose, onRefresh }) {
       "date_of_birth",
       "date_of_leaving",
       "gender",
+      "caste_category",
       "monthly_honorarium",
       "bank_name",
       "bank_account_number",
@@ -193,6 +196,20 @@ export function EmpDetail({ empCode, onClose, onRefresh }) {
                 { value: "M", label: "Male" },
                 { value: "F", label: "Female" },
                 { value: "O", label: "Other" },
+              ]}
+            />
+            <GovSelect
+              id="caste_category"
+              label="Social Category"
+              value={formData.caste_category ?? ""}
+              onChange={handleChange}
+              options={[
+                { value: "", label: "-- Select Category --" },
+                { value: "GEN", label: "General" },
+                { value: "SC", label: "Scheduled Caste" },
+                { value: "ST", label: "Scheduled Tribe" },
+                { value: "OBC", label: "Other Backward Class" },
+                { value: "EWS", label: "Economically Weaker Section" },
               ]}
             />
             <GovInput
@@ -385,8 +402,7 @@ export function EmpDetail({ empCode, onClose, onRefresh }) {
               options={[
                 { value: "PERMANENT", label: "Permanent" },
                 { value: "CONTRACT", label: "Contract" },
-                { value: "INTERN", label: "Intern" },
-                { value: "CONSULTANT", label: "Consultant" },
+                { value: "OUTSOURCED", label: "Out-sourced" },
               ]}
             />
             <GovInput
@@ -515,7 +531,7 @@ export function EmpDetail({ empCode, onClose, onRefresh }) {
             />
             <GovInput
               id="emergency_contact_phone"
-              label="Emergency Phone"
+              label="Emergency Phone Number"
               value={formData.emergency_contact_phone}
               onChange={handleChange}
             />
@@ -534,7 +550,9 @@ export function EmpDetail({ empCode, onClose, onRefresh }) {
           <GovButton
             type="button"
             variant="outline"
-            onClick={() => window.open("#", "_blank")}
+            onClick={() =>
+              window.open(`/manager/users/${empId}/reset-password`, "_blank")
+            }
           >
             Reset User Password
           </GovButton>

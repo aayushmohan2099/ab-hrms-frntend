@@ -2,6 +2,10 @@
 import { useState } from "react";
 import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { GovModal } from "../components/ui/GovModal";
+import { GovInput } from "../components/ui/GovInput";
+import { GovButton } from "../components/ui/GovButton";
+import { userManagementService } from "../api/userMgmnt";
 import {
   LogOut,
   LayoutDashboard,
@@ -12,6 +16,9 @@ import {
   X,
   BadgeIndianRupee,
   CalendarClock,
+  KeyRound,
+  AlertCircle,
+  CheckCircle2,
 } from "lucide-react";
 
 export function ManagerLayout() {
@@ -20,9 +27,65 @@ export function ManagerLayout() {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Change Password Modal State
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
   const handleLogout = () => {
     logout();
     navigate("/login");
+  };
+
+  const handleChangePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setPasswordError("");
+    setPasswordSuccess("");
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError("New passwords do not match.");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setPasswordError("New password must be at least 8 characters long.");
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      await userManagementService.changePassword(user.id, {
+        old_password: oldPassword,
+        new_password: newPassword,
+      });
+
+      setPasswordSuccess("Password updated successfully.");
+
+      // Auto close and logout after 2 seconds
+      setTimeout(() => {
+        setIsPasswordModalOpen(false);
+        handleLogout();
+      }, 2000);
+    } catch (err) {
+      setPasswordError(
+        err.response?.data?.detail ||
+          "Failed to change password. Please check your old password.",
+      );
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const resetModalState = () => {
+    setOldPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setPasswordError("");
+    setPasswordSuccess("");
   };
 
   const navLinks = [
@@ -62,7 +125,7 @@ export function ManagerLayout() {
       >
         <div className="p-5 border-b border-blue-700 flex justify-between items-center">
           <div>
-            <h2 className="text-xl font-bold">Manager Portal</h2>
+            <h2 className="text-xl font-bold text-white">Manager Portal</h2>
             <p className="text-xs text-blue-200 mt-1">Department View</p>
           </div>
           <button
@@ -98,12 +161,28 @@ export function ManagerLayout() {
           </ul>
         </nav>
 
-        <div className="p-4 border-t border-blue-700">
+        {/* Sticky Action Buttons */}
+        <div className="p-4 border-t border-blue-700 mt-auto shrink-0 flex items-center justify-between gap-2 bg-secondary">
+          <button
+            onClick={() => {
+              resetModalState();
+              setIsPasswordModalOpen(true);
+            }}
+            className="flex-1 flex items-center justify-center gap-2 font-medium text-sm text-blue-100 hover:text-white hover:bg-primary-dark p-2 rounded transition-colors"
+            title="Change Password"
+          >
+            <KeyRound size={18} />{" "}
+            <span className="hidden xl:inline">Password</span>
+          </button>
+
+          <div className="w-px h-6 bg-blue-700"></div>
+
           <button
             onClick={handleLogout}
-            className="flex items-center justify-center gap-2 font-medium text-sm text-blue-100 hover:text-white hover:bg-primary-dark p-2 rounded w-full transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 font-medium text-sm text-red-300 hover:text-white hover:bg-danger p-2 rounded transition-colors"
           >
-            <LogOut size={18} /> Logout
+            <LogOut size={18} />{" "}
+            <span className="hidden xl:inline">Logout</span>
           </button>
         </div>
       </aside>
@@ -133,6 +212,91 @@ export function ManagerLayout() {
           <Outlet />
         </main>
       </div>
+
+      {/* Change Password Modal */}
+      <GovModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => !isChangingPassword && setIsPasswordModalOpen(false)}
+        title="Change Your Password"
+        className="max-w-md"
+      >
+        <form onSubmit={handleChangePasswordSubmit} className="space-y-6 pb-2">
+          {passwordError && (
+            <div className="p-3 bg-red-50 text-danger text-sm rounded border border-red-200 flex items-start gap-2">
+              <AlertCircle size={16} className="mt-0.5 shrink-0" />
+              <span>{passwordError}</span>
+            </div>
+          )}
+
+          {passwordSuccess && (
+            <div className="p-3 bg-green-50 text-green-700 text-sm rounded border border-green-200 flex items-start gap-2">
+              <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
+              <span>{passwordSuccess} Redirecting to login...</span>
+            </div>
+          )}
+
+          <div className="space-y-4">
+            <GovInput
+              id="oldPassword"
+              type="password"
+              label="Current Password"
+              value={oldPassword}
+              onChange={(e) => setOldPassword(e.target.value)}
+              showPasswordToggle
+              required
+            />
+
+            <GovInput
+              id="newPassword"
+              type="password"
+              label="New Password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              showPasswordToggle
+              required
+            />
+
+            {newPassword && (
+              <div className="text-sm p-3 bg-gray-50 border border-gray-200 rounded-md break-all">
+                <span className="text-gray-500 font-semibold">
+                  Your new password will be:{" "}
+                </span>
+                <span className="font-mono text-primary-dark font-bold">
+                  {newPassword}
+                </span>
+              </div>
+            )}
+
+            <GovInput
+              id="confirmPassword"
+              type="password"
+              label="Confirm New Password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              showPasswordToggle
+              required
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+            <GovButton
+              type="button"
+              variant="outline"
+              onClick={() => setIsPasswordModalOpen(false)}
+              disabled={isChangingPassword || passwordSuccess}
+            >
+              Cancel
+            </GovButton>
+            <GovButton
+              type="submit"
+              variant="primary"
+              disabled={isChangingPassword || passwordSuccess}
+            >
+              {isChangingPassword ? "Updating..." : "Update Password"}
+            </GovButton>
+          </div>
+        </form>
+      </GovModal>
     </div>
   );
 }
