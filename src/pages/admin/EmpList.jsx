@@ -165,14 +165,23 @@ export function EmpList() {
         return;
       }
 
+      // Sort employees by employee_code in ascending order
+      const sortedEmployees = [...allEmployees].sort((a, b) =>
+        (a.employee_code || "").localeCompare(
+          b.employee_code || "",
+          undefined,
+          { numeric: true, sensitivity: "base" },
+        ),
+      );
+
       // Format data for Excel
-      const exportData = allEmployees.map((emp, index) => ({
+      const exportData = sortedEmployees.map((emp, index) => ({
         "S.No.": index + 1,
         "Employee Code": emp.employee_code,
         "First Name": emp.first_name,
         "Last Name": emp.last_name,
-        "Gender": emp.gender || "N/A",
-        "Caste": emp.caste_category || "N/A",
+        Gender: emp.gender || "N/A",
+        Caste: emp.caste_category || "N/A",
         Email: emp.email || "N/A",
         Phone: emp.phone_number || "N/A",
         "Date of Birth": emp.date_of_birth || "N/A",
