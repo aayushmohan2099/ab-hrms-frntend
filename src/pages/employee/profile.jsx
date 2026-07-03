@@ -374,7 +374,7 @@ export function EmployeeProfile() {
               />
               <GovInput
                 id="emergency_contact_phone"
-                label="Emergency Phone"
+                label="Emergency Phone Number"
                 value={formData.emergency_contact_phone}
                 onChange={handleChange}
               />

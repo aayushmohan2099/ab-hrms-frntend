@@ -83,7 +83,6 @@ export function BulkCreateEmp() {
     "department_id",
     "designation_id",
     "date_of_joining",
-    "date_of_birth",
     "gender",
     "monthly_honorarium",
   ];
