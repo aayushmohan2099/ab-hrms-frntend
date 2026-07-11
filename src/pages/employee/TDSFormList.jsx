@@ -187,13 +187,19 @@ export function EmployeeTDSList() {
                         })}
                       </GovTableCell>
                       <GovTableCell className="text-right">
-                        {form.download_url ? (
+                        {form.form_pdf ? (
                           <GovButton
                             variant="primary"
                             size="sm"
                             className="gap-2 text-xs"
                             onClick={() =>
-                              window.open(form.download_url, "_blank")
+                              window.open(
+                                form.form_pdf.replace(
+                                  "/api/v1/",
+                                  "/media/",
+                                ),
+                                "_blank",
+                              )
                             }
                           >
                             <DownloadCloud size={16} /> Download PDF

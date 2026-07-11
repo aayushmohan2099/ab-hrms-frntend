@@ -89,7 +89,6 @@ export function BulkCreateEmp() {
     "department_id",
     "designation_id",
     "date_of_joining",
-    "date_of_birth",
     "gender",
     "monthly_honorarium",
   ];
@@ -199,7 +198,9 @@ export function BulkCreateEmp() {
                     Department
                   </label>
                   <div className="h-10 px-3 flex items-center rounded-md border bg-gray-100 text-gray-700">
-                    {user.department_name}
+                    <span className="font-medium">
+                      {user.department_name} (ID: {user.department_id})
+                    </span>
                   </div>
                 </div>
               ) : (
