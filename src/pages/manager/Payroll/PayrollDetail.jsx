@@ -23,6 +23,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { EditRecordModal } from "./components/EditRecordModal";
+import { ExportPayroll } from "./components/ExportPayroll";
 
 export function PayrollDetail() {
   const { runId } = useParams();
@@ -208,6 +209,12 @@ export function PayrollDetail() {
           >
             <RefreshCw size={16} /> Refresh
           </GovButton>
+
+          <ExportPayroll
+            departmentId={departmentId}
+            runId={runId}
+            runDetails={run}
+          />
 
           {run && (run.status === "COMPLETED" || run.status === "COMPUTED") && (
             <GovButton

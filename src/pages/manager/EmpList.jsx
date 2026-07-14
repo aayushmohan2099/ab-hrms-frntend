@@ -6,6 +6,7 @@ import { departmentService } from "../../api/deptService";
 import { designationService } from "../../api/desigService";
 import { GovCard } from "../../components/ui/GovCard";
 import { GovSelect } from "../../components/ui/GovSelect";
+import { GovInput } from "../../components/ui/GovInput";
 import { GovButton } from "../../components/ui/GovButton";
 import { GovBadge } from "../../components/ui/GovBadge";
 import { GovModal } from "../../components/ui/GovModal";
@@ -25,6 +26,7 @@ import {
   RefreshCw,
   Eye,
   Download,
+  Search,
 } from "lucide-react";
 import { EmpDetail } from "./EmpComps/EmpDetail";
 import { useAuth } from "../../contexts/AuthContext";
@@ -39,6 +41,10 @@ export function EmpList() {
 
   const [selectedDept, setSelectedDept] = useState(user?.department_id || "");
   const [selectedDesig, setSelectedDesig] = useState("");
+
+  // Search State
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
 
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -91,7 +97,19 @@ export function EmpList() {
     }
   }, [selectedDept]);
 
-  // 3. Fetch Employees when Dept, Designation, or Page changes
+  // Debounce Search Term
+  useEffect(() => {
+    const timerId = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setPage(1); // Reset page to 1 when a new search starts
+    }, 500);
+
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, [searchTerm]);
+
+  // 3. Fetch Employees when Dept, Designation, Search, or Page changes
   const fetchEmployees = async () => {
     if (!selectedDept) {
       setEmployees([]);
@@ -103,6 +121,7 @@ export function EmpList() {
     try {
       const filters = { department: selectedDept };
       if (selectedDesig) filters.designation = selectedDesig;
+      if (debouncedSearchTerm) filters.search = debouncedSearchTerm;
 
       const data = await empService.getEmployees(page, pageSize, filters);
       setEmployees(data.results || []);
@@ -119,7 +138,7 @@ export function EmpList() {
 
   useEffect(() => {
     fetchEmployees();
-  }, [selectedDept, selectedDesig, page]);
+  }, [selectedDept, selectedDesig, debouncedSearchTerm, page]);
 
   // Bulk Selection Logic
   const handleSelectAll = (e) => {
@@ -168,6 +187,7 @@ export function EmpList() {
       // Fetch ALL records for the selected filters bypassing pagination limits
       const filters = { department: selectedDept };
       if (selectedDesig) filters.designation = selectedDesig;
+      if (debouncedSearchTerm) filters.search = debouncedSearchTerm;
 
       // Requesting a high page size to get all records (assuming standard DB sizes)
       const data = await empService.getEmployees(1, 10000, filters);
@@ -273,7 +293,7 @@ export function EmpList() {
       <GovCard className="p-0 overflow-hidden flex flex-col min-h-[500px]">
         {/* Department Filter Bar */}
         <div className="p-4 border-b border-gray-200 bg-gray-50 flex flex-wrap items-end justify-between gap-4 shrink-0">
-          <div className="w-full md:w-72">
+          <div className="w-full md:w-64">
             <div className="space-y-1">
               <label className="text-sm font-medium text-gray-700">
                 Department - {user?.department_name}
@@ -281,22 +301,14 @@ export function EmpList() {
             </div>
           </div>
 
-          {selectedEmpCodes.length > 0 && (
-            <div className="flex items-center gap-3 bg-red-50 px-4 py-2 rounded border border-red-200">
-              <span className="text-sm font-semibold text-danger">
-                {selectedEmpCodes.length} selected
-              </span>
-              <GovButton
-                variant="danger"
-                size="sm"
-                className="gap-1"
-                onClick={handleBulkDelete}
-                disabled={isDeleting}
-              >
-                <Trash2 size={14} /> Delete Selected
-              </GovButton>
-            </div>
-          )}
+          <div className="w-full md:w-64">
+            <GovInput
+              label="Search Employees"
+              placeholder="Name, Code, Phone..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
 
           {/* Conditional Designation Filter */}
           {selectedDept && (
@@ -313,6 +325,23 @@ export function EmpList() {
                   ...designations.map((d) => ({ value: d.id, label: d.name })),
                 ]}
               />
+            </div>
+          )}
+
+          {selectedEmpCodes.length > 0 && (
+            <div className="flex items-center gap-3 bg-red-50 px-4 py-2 rounded border border-red-200 ml-auto">
+              <span className="text-sm font-semibold text-danger">
+                {selectedEmpCodes.length} selected
+              </span>
+              <GovButton
+                variant="danger"
+                size="sm"
+                className="gap-1"
+                onClick={handleBulkDelete}
+                disabled={isDeleting}
+              >
+                <Trash2 size={14} /> Delete Selected
+              </GovButton>
             </div>
           )}
         </div>
@@ -381,7 +410,7 @@ export function EmpList() {
                         colSpan={7}
                         className="h-32 text-center text-gray-500"
                       >
-                        No employees found in this department.
+                        No employees found matching your criteria.
                       </GovTableCell>
                     </GovTableRow>
                   ) : (
