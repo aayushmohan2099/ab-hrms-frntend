@@ -1,4 +1,4 @@
-// /src/pages/admin/DeptComps/DeptStruct.jsx
+// src/pages/admin/DeptComps/DeptStruct.jsx
 import { useState, useEffect } from "react";
 import { salService } from "../../../api/SalService";
 import { payrollService } from "../../../api/payrollService";
@@ -38,6 +38,11 @@ export function DeptStruct({ deptId }) {
   const [designationRules, setDesignationRules] = useState([]);
   const [globalBreakupRemarks, setGlobalBreakupRemarks] = useState("");
 
+  // SECTION 3: Custom Salary Structures State
+  const [customStructures, setCustomStructures] = useState([]);
+  const [selectedCustomEmpCodes, setSelectedCustomEmpCodes] = useState([]);
+  const [deletingCustom, setDeletingCustom] = useState(false);
+
   // Fetch initial data for both sections
   const fetchData = async () => {
     setLoadingInitial(true);
@@ -62,10 +67,11 @@ export function DeptStruct({ deptId }) {
         });
       }
 
-      // 2. Fetch Designations & Designation Rules
-      const [desigsRes, rulesRes] = await Promise.all([
+      // 2. Fetch Designations, Designation Rules, and Custom Salary Structures
+      const [desigsRes, rulesRes, customRes] = await Promise.all([
         designationService.getDesignations(deptId, 1, 100),
         payrollService.getDesignationRules(deptId, 1, 100),
+        salService.getDepartmentCustomSalaryStructures(deptId, 1, 100),
       ]);
 
       const designations = desigsRes.results || [];
@@ -90,6 +96,10 @@ export function DeptStruct({ deptId }) {
       if (rules.length > 0 && rules[0].remarks) {
         setGlobalBreakupRemarks(rules[0].remarks);
       }
+
+      // Populate custom structures
+      setCustomStructures(customRes.results || []);
+      setSelectedCustomEmpCodes([]);
     } catch (err) {
       console.error("Error fetching struct data:", err);
       setStructError("Failed to load existing configuration.");
@@ -186,6 +196,45 @@ export function DeptStruct({ deptId }) {
       setRulesError("Failed to save some payroll rules. Please verify data.");
     } finally {
       setSavingRules(false);
+    }
+  };
+
+  // Handle Custom Structure Selection (Section 3)
+  const handleSelectAllCustom = (e) => {
+    if (e.target.checked) {
+      setSelectedCustomEmpCodes(customStructures.map((cs) => cs.employee_code));
+    } else {
+      setSelectedCustomEmpCodes([]);
+    }
+  };
+
+  const handleSelectOneCustom = (code) => {
+    setSelectedCustomEmpCodes((prev) =>
+      prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code],
+    );
+  };
+
+  // Handle Bulk Delete Custom Structure (Section 3)
+  const handleBulkDeleteCustom = async () => {
+    if (selectedCustomEmpCodes.length === 0) return;
+    if (
+      !window.confirm(
+        `Are you sure you want to delete custom salary structures for ${selectedCustomEmpCodes.length} employees?`,
+      )
+    )
+      return;
+
+    setDeletingCustom(true);
+    try {
+      await salService.bulkDeleteCustomSalaryStructure({
+        employee_codes: selectedCustomEmpCodes,
+      });
+      await fetchData();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete custom salary structures.");
+    } finally {
+      setDeletingCustom(false);
     }
   };
 
@@ -298,7 +347,7 @@ export function DeptStruct({ deptId }) {
       {/* ============================================================
           SECTION 2: PAYROLL BREAKUP (Designation Rules)
       ============================================================= */}
-      <section className="pb-8">
+      <section className="pb-4">
         <div className="mb-4">
           <h3 className="text-xl font-bold text-gray-800">Payroll Breakup</h3>
           <p className="text-sm text-gray-500">
@@ -402,6 +451,110 @@ export function DeptStruct({ deptId }) {
             </>
           )}
         </form>
+      </section>
+
+      <GovSeparator />
+
+      {/* ============================================================
+          SECTION 3: CUSTOM SALARY STRUCTURES
+      ============================================================= */}
+      <section className="pb-8">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h3 className="text-xl font-bold text-gray-800">
+              Custom Salary Structures
+            </h3>
+            <p className="text-sm text-gray-500">
+              View and manage employee-specific fixed deduction overrides.
+            </p>
+          </div>
+          {selectedCustomEmpCodes.length > 0 && (
+            <GovButton
+              variant="danger"
+              size="sm"
+              onClick={handleBulkDeleteCustom}
+              disabled={deletingCustom}
+            >
+              {deletingCustom
+                ? "Deleting..."
+                : `Delete Selected (${selectedCustomEmpCodes.length})`}
+            </GovButton>
+          )}
+        </div>
+
+        {customStructures.length === 0 ? (
+          <div className="p-8 text-center bg-gray-50 rounded-lg border border-dashed border-gray-300 text-gray-500 text-sm">
+            No custom salary structures defined for any employee in this
+            department.
+          </div>
+        ) : (
+          <GovTable>
+            <GovTableHeader>
+              <GovTableCell isHeader className="w-12 text-center">
+                <input
+                  type="checkbox"
+                  checked={
+                    selectedCustomEmpCodes.length === customStructures.length &&
+                    customStructures.length > 0
+                  }
+                  onChange={handleSelectAllCustom}
+                  className="w-4 h-4 text-primary-dark rounded border-gray-300 focus:ring-primary-dark cursor-pointer"
+                />
+              </GovTableCell>
+              <GovTableCell isHeader>Employee</GovTableCell>
+              <GovTableCell isHeader>Designation</GovTableCell>
+              <GovTableCell isHeader className="text-right">
+                TDS (₹)
+              </GovTableCell>
+              <GovTableCell isHeader className="text-right">
+                EPF (₹)
+              </GovTableCell>
+              <GovTableCell isHeader className="text-right">
+                ESIC (₹)
+              </GovTableCell>
+              <GovTableCell isHeader>Effective From</GovTableCell>
+            </GovTableHeader>
+            <tbody className="divide-y divide-gray-200 bg-white">
+              {customStructures.map((cs) => (
+                <GovTableRow key={cs.id} hover={true}>
+                  <GovTableCell className="text-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedCustomEmpCodes.includes(
+                        cs.employee_code,
+                      )}
+                      onChange={() => handleSelectOneCustom(cs.employee_code)}
+                      className="w-4 h-4 text-primary-dark rounded border-gray-300 focus:ring-primary-dark cursor-pointer"
+                    />
+                  </GovTableCell>
+                  <GovTableCell>
+                    <div className="font-medium text-gray-800">
+                      {cs.employee_name}
+                    </div>
+                    <div className="text-xs text-gray-500 font-mono">
+                      {cs.employee_code}
+                    </div>
+                  </GovTableCell>
+                  <GovTableCell className="text-gray-700">
+                    {cs.designation_name}
+                  </GovTableCell>
+                  <GovTableCell className="text-right font-medium text-danger">
+                    {cs.tds_amount}
+                  </GovTableCell>
+                  <GovTableCell className="text-right font-medium text-danger">
+                    {cs.epf_amount}
+                  </GovTableCell>
+                  <GovTableCell className="text-right font-medium text-danger">
+                    {cs.esic_amount}
+                  </GovTableCell>
+                  <GovTableCell className="text-sm text-gray-600">
+                    {cs.effective_from}
+                  </GovTableCell>
+                </GovTableRow>
+              ))}
+            </tbody>
+          </GovTable>
+        )}
       </section>
     </div>
   );

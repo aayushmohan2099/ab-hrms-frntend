@@ -25,6 +25,7 @@ import { NewsBoard } from "../pages/admin/NewsBoard";
 import { TDSFormList } from "../pages/admin/TDSFormList";
 import { UploadTDSForm } from "../pages/admin/TDSFormComps/UploadTDSForm";
 import { ResetPassword } from "../pages/admin/EmpComps/ResetPassword";
+import { EmpCustomSalStruct } from "../pages/admin/EmpComps/EmpCustomSalStruct";
 
 // Manager Pages
 import { ManagerDashboard } from "../pages/manager/Dashboard";
@@ -89,6 +90,10 @@ export function AppRoutes() {
           <Route path="employees" element={<EmpList />} />
           <Route path="employees/create" element={<CreateEmp />} />
           <Route path="employees/bulk-register" element={<BulkCreateEmp />} />
+          <Route
+            path="employees/sal-bulk-struct"
+            element={<EmpCustomSalStruct />}
+          />
 
           <Route path="attendance" element={<AttenList />} />
           <Route path="attendance/bulk-upload" element={<BulkUploadAtten />} />
@@ -151,7 +156,10 @@ export function AppRoutes() {
           <Route path="payroll" element={<PayrollList />} />
           <Route path="payroll/:runId" element={<PayrollDetail />} />
           <Route path="salary-slips" element={<ManagerSalarySlips />} />
-          <Route path="users/:id/reset-password" element={<ManagerResetPassword />} />
+          <Route
+            path="users/:id/reset-password"
+            element={<ManagerResetPassword />}
+          />
         </Route>
       </Route>
 

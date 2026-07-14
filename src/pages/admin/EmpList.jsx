@@ -278,10 +278,22 @@ export function EmpList() {
           </div>
 
           {selectedEmpCodes.length > 0 && (
-            <div className="flex items-center gap-3 bg-red-50 px-4 py-2 rounded border border-red-200">
-              <span className="text-sm font-semibold text-danger">
+            <div className="flex items-center gap-3 bg-blue-50 px-4 py-2 rounded border border-blue-200 ml-auto">
+              <span className="text-sm font-semibold text-primary-dark">
                 {selectedEmpCodes.length} selected
               </span>
+              <GovButton
+                variant="primary"
+                size="sm"
+                className="gap-1"
+                onClick={() =>
+                  navigate("/admin/employees/sal-bulk-struct/", {
+                    state: { employeeCodes: selectedEmpCodes },
+                  })
+                }
+              >
+                <Edit size={14} /> Custom Salary
+              </GovButton>
               <GovButton
                 variant="danger"
                 size="sm"
@@ -289,7 +301,7 @@ export function EmpList() {
                 onClick={handleBulkDelete}
                 disabled={isDeleting}
               >
-                <Trash2 size={14} /> Delete Selected
+                <Trash2 size={14} /> Delete
               </GovButton>
             </div>
           )}

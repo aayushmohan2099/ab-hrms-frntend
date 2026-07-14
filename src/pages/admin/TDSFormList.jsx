@@ -245,17 +245,24 @@ export function TDSFormList() {
                         })}
                       </GovTableCell>
                       <GovTableCell className="text-right space-x-2">
-                        {form.download_url && (
+                        {form.form_pdf ? (
                           <GovButton
                             variant="outline"
                             size="sm"
                             className="gap-2 text-xs text-primary-dark"
                             onClick={() =>
-                              window.open(form.download_url, "_blank")
+                              window.open(
+                                form.form_pdf.replace("/api/v1/", "/media/"),
+                                "_blank",
+                              )
                             }
                           >
                             <DownloadCloud size={14} /> Download
                           </GovButton>
+                        ) : (
+                          <span className="text-gray-400 text-xs italic mr-2">
+                            Not Available
+                          </span>
                         )}
                         <GovButton
                           variant="danger"
