@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { attendanceService } from "../../../api/attendanceService";
 import { GovCalendar } from "../../../components/ui/GovCalendar";
 import { GovButton } from "../../../components/ui/GovButton";
-import { ArrowLeft, Save, Loader2 } from "lucide-react"; // Added Loader2
+import { ArrowLeft, Save, Loader2 } from "lucide-react";
 
 export function EmployeeCalendar() {
   const location = useLocation();
@@ -20,19 +20,60 @@ export function EmployeeCalendar() {
     name,
   } = location.state || {};
 
-  // Convert router state into manageable local state for navigation
+  // SURGICAL FIX: Bulletproof extraction of data.
+  // It checks if the parent passed the massive array of ALL employees, a single object, or undefined.
+  const getInitialDailyRecords = () => {
+    if (!initialRecords) return [];
+    if (Array.isArray(initialRecords)) {
+      // If it's the massive array of all employees passed from parent
+      if (initialRecords.length > 0 && initialRecords[0].employee_code) {
+        const emp = initialRecords.find((e) => e.employee_code === empCode);
+        return emp?.daily_records || [];
+      }
+      return initialRecords; // It's already the daily_records array
+    }
+    return initialRecords?.daily_records || [];
+  };
+
+  const getInitialLeaveApps = () => {
+    // Try extracting from initialRecords first if it's the huge array of employees
+    if (
+      Array.isArray(initialRecords) &&
+      initialRecords.length > 0 &&
+      initialRecords[0].employee_code
+    ) {
+      const emp = initialRecords.find((e) => e.employee_code === empCode);
+      if (emp?.current_month_records) return emp.current_month_records;
+    }
+    // Fallback to initialLeaveApps
+    if (!initialLeaveApps) return [];
+    if (Array.isArray(initialLeaveApps)) {
+      if (initialLeaveApps.length > 0 && initialLeaveApps[0].employee_code) {
+        const emp = initialLeaveApps.find((e) => e.employee_code === empCode);
+        return emp?.current_month_records || [];
+      }
+      return initialLeaveApps;
+    }
+    return initialLeaveApps?.current_month_records || [];
+  };
+
+  // <-- Convert router state into manageable local state for navigation
   const [currentMonth, setCurrentMonth] = useState(
     initialMonth || new Date().getMonth() + 1,
   );
   const [currentYear, setCurrentYear] = useState(
     initialYear || new Date().getFullYear(),
   );
-  const [currentRecords, setCurrentRecords] = useState(initialRecords || []);
-  const [currentLeaveApps, setCurrentLeaveApps] = useState(
-    initialLeaveApps || [],
-  );
-  const [isFetchingMonth, setIsFetchingMonth] = useState(false);
 
+  // Initialize state using the safe extractors guaranteeing they are ARRAYS
+  const [currentRecords, setCurrentRecords] = useState(
+    getInitialDailyRecords(),
+  );
+  const [currentLeaveApps, setCurrentLeaveApps] = useState(
+    getInitialLeaveApps(),
+  );
+
+  const [isFetchingMonth, setIsFetchingMonth] = useState(false); // loader for month switching
   const [calendarWeeks, setCalendarWeeks] = useState([]);
   const [modifiedDates, setModifiedDates] = useState({}); // Track which dates the user manually toggled
   const [saving, setSaving] = useState(false);
@@ -52,7 +93,7 @@ export function EmployeeCalendar() {
     "December",
   ];
 
-  // Function to handle changing months
+  // <-- Function to handle changing months
   const handleMonthChange = async (delta) => {
     let newMonth = currentMonth + delta;
     let newYear = currentYear;
@@ -75,9 +116,11 @@ export function EmployeeCalendar() {
         newYear,
         newMonth,
       );
-      setCurrentRecords(data || []);
-      // Reset or set leave apps based on response payload format
+
+      // Assign the dynamically fetched data straight from the new API structure
+      setCurrentRecords(data?.daily_records || []);
       setCurrentLeaveApps(data?.current_month_records || []);
+
       setModifiedDates({});
     } catch (err) {
       console.error("Failed to fetch attendance:", err);
@@ -90,11 +133,11 @@ export function EmployeeCalendar() {
 
   useEffect(() => {
     if (!empCode) {
-      navigate("/manager/attendance");
+      navigate("/admin/attendance");
       return;
     }
 
-    // Build the calendar grid using current state variables
+    // Build the calendar grid using CURRENT state variables
     const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
     const firstDayIndex = new Date(currentYear, currentMonth - 1, 1).getDay();
 
@@ -106,13 +149,6 @@ export function EmployeeCalendar() {
       currentWeek[i] = null;
     }
 
-    // Safely extract leave applications from the currentRecords (if attached by the new backend logic)
-    // The currentRecords state holds the list of daily records, but the new backend view
-    // structure might pass the leave apps alongside it. If the API returns the employee object directly,
-    // currentRecords might be the array inside `daily_records` or `current_month_records`.
-    // Assuming `initialRecords` was passed as `emp.current_month_records` and leave apps are not in this array,
-    // we need to rely on the daily record's status for the manager view unless we refactor the parent list view to pass leave apps.
-    // For now, we use the specific leave names mapped below to override the status.
     const leaveNames = {
       MATERNITY: "Maternity Leave (ML)",
       CASUAL: "Casual Leave (CL)",
@@ -127,6 +163,8 @@ export function EmployeeCalendar() {
       const dayIndex = (firstDayIndex + day - 1) % 7;
 
       const dateStr = `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+      // Because of our robust extraction above, currentRecords is guaranteed to be a valid Array here.
       const record = currentRecords.find((r) => r.date === dateStr);
 
       const currentStatus =
@@ -289,7 +327,7 @@ export function EmployeeCalendar() {
         cannot be modified here.
       </p>
 
-      {/* Wrapping Calendar in a relative div to allow the loader overlay */}
+      {/* Wrapping Calendar in a relative div to allow the loader overlay if needed */}
       <div className="relative">
         {isFetchingMonth && (
           <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-10 flex items-center justify-center rounded-md">
@@ -306,8 +344,8 @@ export function EmployeeCalendar() {
           year={currentYear}
           weeks={calendarWeeks}
           onCellClick={handleCellClick}
-          onPrevMonth={() => handleMonthChange(-1)}
-          onNextMonth={() => handleMonthChange(1)}
+          onPrevMonth={() => handleMonthChange(-1)} // <-- Attach prev handler
+          onNextMonth={() => handleMonthChange(1)} // <-- Attach next handler
         />
       </div>
     </div>

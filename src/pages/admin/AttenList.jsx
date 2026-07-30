@@ -122,6 +122,13 @@ export function AttenList() {
         Theme: emp.theme || "Not Set",
         "Present Days": presentDays,
         "Working Days": workingDays,
+
+        "Maternity Leaves": emp.yearly_leave_balances?.MATERNITY ?? 0,
+        "Casual Leaves": emp.yearly_leave_balances?.CASUAL ?? 0,
+        "Sick Leaves": emp.yearly_leave_balances?.SICK ?? 0,
+        "Earned Leaves": emp.yearly_leave_balances?.EARNED ?? 0,
+        "Leaves Without Pay": emp.yearly_leave_balances?.LWP ?? 0,
+        "ESL Leaves": emp.yearly_leave_balances?.ESL ?? 0,
       };
     });
 
@@ -247,6 +254,24 @@ export function AttenList() {
                   <GovTableCell isHeader className="text-center">
                     Present Days / Working Days
                   </GovTableCell>
+                  <GovTableCell isHeader className="text-center">
+                    Maternity Leaves
+                  </GovTableCell>
+                  <GovTableCell isHeader className="text-center">
+                    Casual Leaves
+                  </GovTableCell>
+                  <GovTableCell isHeader className="text-center">
+                    Sick Leaves
+                  </GovTableCell>
+                  <GovTableCell isHeader className="text-center">
+                    Earned Leaves
+                  </GovTableCell>
+                  <GovTableCell isHeader className="text-center">
+                    Leaves Without Pay
+                  </GovTableCell>
+                  <GovTableCell isHeader className="text-center">
+                    ESL Leaves
+                  </GovTableCell>
                   <GovTableCell isHeader className="text-right">
                     Actions
                   </GovTableCell>
@@ -291,6 +316,29 @@ export function AttenList() {
                           <GovTableCell>{emp.theme || "Not Set"}</GovTableCell>
                           <GovTableCell className="text-center font-bold text-primary-dark text-lg">
                             {emp.present_summary}
+                          </GovTableCell>
+                          <GovTableCell className="text-center font-bold text-primary-dark text-lg">
+                            {emp.yearly_leave_balances?.MATERNITY ?? 0}
+                          </GovTableCell>
+
+                          <GovTableCell className="text-center font-bold text-primary-dark text-lg">
+                            {emp.yearly_leave_balances?.CASUAL ?? 0}
+                          </GovTableCell>
+
+                          <GovTableCell className="text-center font-bold text-primary-dark text-lg">
+                            {emp.yearly_leave_balances?.SICK ?? 0}
+                          </GovTableCell>
+
+                          <GovTableCell className="text-center font-bold text-primary-dark text-lg">
+                            {emp.yearly_leave_balances?.EARNED ?? 0}
+                          </GovTableCell>
+
+                          <GovTableCell className="text-center font-bold text-primary-dark text-lg">
+                            {emp.yearly_leave_balances?.LWP ?? 0}
+                          </GovTableCell>
+
+                          <GovTableCell className="text-center font-bold text-primary-dark text-lg">
+                            {emp.yearly_leave_balances?.ESL ?? 0}
                           </GovTableCell>
                           <GovTableCell className="text-right">
                             <GovButton
