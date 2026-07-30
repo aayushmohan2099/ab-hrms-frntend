@@ -20,6 +20,43 @@ export function EmployeeCalendar() {
     name,
   } = location.state || {};
 
+  // SURGICAL FIX: Bulletproof extraction of data.
+  // It checks if the parent passed the massive array of ALL employees, a single object, or undefined.
+  const getInitialDailyRecords = () => {
+    if (!initialRecords) return [];
+    if (Array.isArray(initialRecords)) {
+      // If it's the massive array of all employees passed from parent
+      if (initialRecords.length > 0 && initialRecords[0].employee_code) {
+        const emp = initialRecords.find((e) => e.employee_code === empCode);
+        return emp?.daily_records || [];
+      }
+      return initialRecords; // It's already the daily_records array
+    }
+    return initialRecords?.daily_records || [];
+  };
+
+  const getInitialLeaveApps = () => {
+    // Try extracting from initialRecords first if it's the huge array of employees
+    if (
+      Array.isArray(initialRecords) &&
+      initialRecords.length > 0 &&
+      initialRecords[0].employee_code
+    ) {
+      const emp = initialRecords.find((e) => e.employee_code === empCode);
+      if (emp?.current_month_records) return emp.current_month_records;
+    }
+    // Fallback to initialLeaveApps
+    if (!initialLeaveApps) return [];
+    if (Array.isArray(initialLeaveApps)) {
+      if (initialLeaveApps.length > 0 && initialLeaveApps[0].employee_code) {
+        const emp = initialLeaveApps.find((e) => e.employee_code === empCode);
+        return emp?.current_month_records || [];
+      }
+      return initialLeaveApps;
+    }
+    return initialLeaveApps?.current_month_records || [];
+  };
+
   // <-- Convert router state into manageable local state for navigation
   const [currentMonth, setCurrentMonth] = useState(
     initialMonth || new Date().getMonth() + 1,
@@ -27,10 +64,15 @@ export function EmployeeCalendar() {
   const [currentYear, setCurrentYear] = useState(
     initialYear || new Date().getFullYear(),
   );
-  const [currentRecords, setCurrentRecords] = useState(initialRecords || []);
-  const [currentLeaveApps, setCurrentLeaveApps] = useState(
-    initialLeaveApps || [],
+
+  // Initialize state using the safe extractors guaranteeing they are ARRAYS
+  const [currentRecords, setCurrentRecords] = useState(
+    getInitialDailyRecords(),
   );
+  const [currentLeaveApps, setCurrentLeaveApps] = useState(
+    getInitialLeaveApps(),
+  );
+
   const [isFetchingMonth, setIsFetchingMonth] = useState(false); // loader for month switching
   const [calendarWeeks, setCalendarWeeks] = useState([]);
   const [modifiedDates, setModifiedDates] = useState({}); // Track which dates the user manually toggled
@@ -69,15 +111,16 @@ export function EmployeeCalendar() {
     setIsFetchingMonth(true);
 
     try {
-      // NOTE: Ensure your attendanceService has this method or adapt the name (e.g., getAttendanceByEmployee)
       const data = await attendanceService.getEmployeeAttendance(
         empCode,
         newYear,
         newMonth,
       );
-      setCurrentRecords(data || []);
-      // Reset or set leave apps based on response payload format
+
+      // Assign the dynamically fetched data straight from the new API structure
+      setCurrentRecords(data?.daily_records || []);
       setCurrentLeaveApps(data?.current_month_records || []);
+
       setModifiedDates({});
     } catch (err) {
       console.error("Failed to fetch attendance:", err);
@@ -106,13 +149,6 @@ export function EmployeeCalendar() {
       currentWeek[i] = null;
     }
 
-    // Safely extract leave applications from the currentRecords (if attached by the new backend logic)
-    // The currentRecords state holds the list of daily records, but the new backend view
-    // structure might pass the leave apps alongside it. If the API returns the employee object directly,
-    // currentRecords might be the array inside `daily_records` or `current_month_records`.
-    // Assuming `initialRecords` was passed as `emp.current_month_records` and leave apps are not in this array,
-    // we need to rely on the daily record's status for the manager view unless we refactor the parent list view to pass leave apps.
-    // For now, we use the specific leave names mapped below to override the status.
     const leaveNames = {
       MATERNITY: "Maternity Leave (ML)",
       CASUAL: "Casual Leave (CL)",
@@ -127,6 +163,8 @@ export function EmployeeCalendar() {
       const dayIndex = (firstDayIndex + day - 1) % 7;
 
       const dateStr = `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+      // Because of our robust extraction above, currentRecords is guaranteed to be a valid Array here.
       const record = currentRecords.find((r) => r.date === dateStr);
 
       const currentStatus =

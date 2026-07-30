@@ -27,6 +27,20 @@ export const attendanceService = {
     return response.data;
   },
 
+  /**
+   * 1.1) Get Monthly Attendance for a specific employee (Calendar View).
+   * @param {string} empCode - Employee Code.
+   * @param {number} year - 4-digit year.
+   * @param {number} month - Month number (1-12).
+   * @returns {Promise<Object>} Object containing daily_records and current_month_records (leaves).
+   */
+  getEmployeeAttendance: async (empCode, year, month) => {
+    const response = await api.get(
+      `/attendance/emp/monthly-attendance/${empCode}/${year}/${month}/`,
+    );
+    return response.data;
+  },
+
   // ============================================================
   // LEAVE APPLICATIONS
   // ============================================================

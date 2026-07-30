@@ -51,6 +51,9 @@ export function Updates() {
     });
   };
 
+  const shouldAnimate = !isMarqueePaused && newsList.length > 4;
+  const displayedNews = shouldAnimate ? [...newsList, ...newsList] : newsList;
+
   // Reusable animation variants
   const fadeUpVariant = {
     hidden: { opacity: 0, y: 40 },
@@ -232,47 +235,47 @@ export function Updates() {
                 </div>
               ) : (
                 <div
-                  className={`w-full ${!isMarqueePaused ? "animate-vertical-marquee hover:marquee-paused" : ""}`}
+                  className={`w-full ${
+                    shouldAnimate
+                      ? "animate-vertical-marquee hover:marquee-paused"
+                      : ""
+                  }`}
                 >
-                  {/* To make the infinite scroll seamless, we duplicate the list 
-                    so when it hits 50% translate, it looks exactly like 0%
-                  */}
-                  {[...newsList, ...(isMarqueePaused ? [] : newsList)].map(
-                    (news, index) => (
-                      <a
-                        key={`${news.th_urid}-${index}`}
-                        href={
-                          news.has_attachment && news.file_url
-                            ? news.file_url
-                            : "#"
-                        }
-                        target={
-                          news.has_attachment && news.file_url
-                            ? "_blank"
-                            : "_self"
-                        }
-                        rel="noopener noreferrer"
-                        className="block p-4 border-b border-gray-100 hover:bg-blue-50 transition-colors group"
-                      >
-                        <div className="flex gap-4 items-start">
-                          <div className="shrink-0 mt-1">
-                            <FileText
-                              size={18}
-                              className="text-gray-400 group-hover:text-danger transition-colors"
-                            />
-                          </div>
-                          <div>
-                            <span className="inline-block px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-bold rounded mb-2 border border-gray-200">
-                              {formatDate(news.publish_date)}
-                            </span>
-                            <p className="text-sm font-medium text-gray-800 leading-snug group-hover:text-primary-dark transition-colors">
-                              {news.title}
-                            </p>
-                          </div>
+                  {/* Duplicate only when there are enough items to animate */}
+                  {displayedNews.map((news, index) => (
+                    <a
+                      key={`${news.th_urid}-${index}`}
+                      href={
+                        news.has_attachment && news.file_url
+                          ? news.file_url
+                          : "#"
+                      }
+                      target={
+                        news.has_attachment && news.file_url
+                          ? "_blank"
+                          : "_self"
+                      }
+                      rel="noopener noreferrer"
+                      className="block p-4 border-b border-gray-100 hover:bg-blue-50 transition-colors group"
+                    >
+                      <div className="flex gap-4 items-start">
+                        <div className="shrink-0 mt-1">
+                          <FileText
+                            size={18}
+                            className="text-gray-400 group-hover:text-danger transition-colors"
+                          />
                         </div>
-                      </a>
-                    ),
-                  )}
+                        <div>
+                          <span className="inline-block px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-bold rounded mb-2 border border-gray-200">
+                            {formatDate(news.publish_date)}
+                          </span>
+                          <p className="text-sm font-medium text-gray-800 leading-snug group-hover:text-primary-dark transition-colors">
+                            {news.title}
+                          </p>
+                        </div>
+                      </div>
+                    </a>
+                  ))}
                 </div>
               )}
             </div>

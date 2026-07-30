@@ -9,6 +9,7 @@ import { GovSelect } from "../../components/ui/GovSelect";
 import { GovButton } from "../../components/ui/GovButton";
 import { GovBadge } from "../../components/ui/GovBadge";
 import { GovModal } from "../../components/ui/GovModal";
+import { GovInput } from "../../components/ui/GovInput";
 import {
   GovTable,
   GovTableHeader,
@@ -37,6 +38,7 @@ export function EmpList() {
 
   const [designations, setDesignations] = useState([]);
   const [selectedDesig, setSelectedDesig] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -77,7 +79,7 @@ export function EmpList() {
     }
   }, [selectedDept]);
 
-  // 3. Fetch Employees when Dept, Designation, or Page changes
+  // 3. Fetch Employees when Dept, Designation, Page, or Search changes
   const fetchEmployees = async () => {
     if (!selectedDept) {
       setEmployees([]);
@@ -89,6 +91,7 @@ export function EmpList() {
     try {
       const filters = { department: selectedDept };
       if (selectedDesig) filters.designation = selectedDesig;
+      if (searchQuery) filters.search = searchQuery;
 
       const data = await empService.getEmployees(page, pageSize, filters);
       setEmployees(data.results || []);
@@ -104,8 +107,12 @@ export function EmpList() {
   };
 
   useEffect(() => {
-    fetchEmployees();
-  }, [selectedDept, selectedDesig, page]);
+    // Added 400ms debounce for smooth typing
+    const timeoutId = setTimeout(() => {
+      fetchEmployees();
+    }, 400);
+    return () => clearTimeout(timeoutId);
+  }, [selectedDept, selectedDesig, page, searchQuery]);
 
   // Bulk Selection Logic
   const handleSelectAll = (e) => {
@@ -126,7 +133,7 @@ export function EmpList() {
     if (selectedEmpCodes.length === 0) return;
     if (
       !window.confirm(
-        `Are you sure you want to delete ${selectedEmpCodes.length} employees?`,
+        `Are you sure ${selectedEmpCodes.length} employee has resigned from the organization?`,
       )
     )
       return;
@@ -136,7 +143,7 @@ export function EmpList() {
       await empService.bulkDeleteEmployees(selectedEmpCodes);
       fetchEmployees();
     } catch (err) {
-      alert("Failed to delete employees.");
+      alert("Resignation submission failed.");
     } finally {
       setIsDeleting(false);
     }
@@ -301,27 +308,44 @@ export function EmpList() {
                 onClick={handleBulkDelete}
                 disabled={isDeleting}
               >
-                <Trash2 size={14} /> Delete
+                <Trash2 size={14} /> Mark as Resigned
               </GovButton>
             </div>
           )}
 
-          {/* Conditional Designation Filter */}
+          {/* Conditional Designation & Search Filters */}
           {selectedDept && (
-            <div className="w-full md:w-64">
-              <GovSelect
-                label="Filter by Designation"
-                value={selectedDesig}
-                onChange={(e) => {
-                  setSelectedDesig(e.target.value);
-                  setPage(1);
-                }}
-                options={[
-                  { value: "", label: "-- All Designations --" },
-                  ...designations.map((d) => ({ value: d.id, label: d.name })),
-                ]}
-              />
-            </div>
+            <>
+              <div className="w-full md:w-64">
+                <GovSelect
+                  label="Filter by Designation"
+                  value={selectedDesig}
+                  onChange={(e) => {
+                    setSelectedDesig(e.target.value);
+                    setPage(1);
+                  }}
+                  options={[
+                    { value: "", label: "-- All Designations --" },
+                    ...designations.map((d) => ({
+                      value: d.id,
+                      label: d.name,
+                    })),
+                  ]}
+                />
+              </div>
+              <div className="w-full md:w-64">
+                <GovInput
+                  id="employeeSearch"
+                  label="Search Name / Phone"
+                  placeholder="Type to search..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setPage(1);
+                  }}
+                />
+              </div>
+            </>
           )}
         </div>
 

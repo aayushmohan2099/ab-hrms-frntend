@@ -159,7 +159,7 @@ export function EmpList() {
     if (selectedEmpCodes.length === 0) return;
     if (
       !window.confirm(
-        `Are you sure you want to delete ${selectedEmpCodes.length} employees?`,
+        `Are you sure ${selectedEmpCodes.length} employee has resigned from the organization?`,
       )
     )
       return;
@@ -169,7 +169,7 @@ export function EmpList() {
       await empService.bulkDeleteEmployees(selectedEmpCodes);
       fetchEmployees();
     } catch (err) {
-      alert("Failed to delete employees.");
+      alert("Resignation submission failed.");
     } finally {
       setIsDeleting(false);
     }
@@ -340,7 +340,7 @@ export function EmpList() {
                 onClick={handleBulkDelete}
                 disabled={isDeleting}
               >
-                <Trash2 size={14} /> Delete Selected
+                <Trash2 size={14} /> Mark as Resigned
               </GovButton>
             </div>
           )}
